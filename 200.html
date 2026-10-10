@@ -1,0 +1,3525 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Planet Tinkerer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    color-scheme: dark;
+    --void:#08080F;
+    --panel:#141227;
+    --panel-2:#1E1A38;
+    --line:#2F2A52;
+    --line-soft:#242040;
+    --ink:#EFEAFF;
+    --ink-dim:#9E97C6;
+    --ink-faint:#6E678F;
+    --amber:#FFB454;
+    --teal:#54E0C6;
+    --coral:#FF6F6B;
+    --violet:#A98BFF;
+    --display:"Syne","Trebuchet MS",sans-serif;
+    --body:"Figtree","Helvetica Neue",Arial,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1100px 620px at 12% -10%, #1E1740 0%, rgba(30,23,64,0) 62%),
+      radial-gradient(900px 500px at 105% 105%, #11283C 0%, rgba(17,40,60,0) 60%),
+      var(--void);
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:15px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .lab{max-width:1220px;margin:0 auto;padding-inline:16px;padding-block:22px 40px}
+
+  .masthead{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 20px;margin-bottom:16px}
+  h1{
+    font-family:var(--display);font-weight:800;font-size:clamp(28px,5.2vw,44px);
+    letter-spacing:-.02em;margin:0;line-height:1;text-wrap:balance;
+    background:linear-gradient(96deg,var(--amber),#FF8FB1 45%,var(--violet));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .tagline{color:var(--ink-dim);font-size:14px;max-width:38ch;margin:0}
+
+  .worlds{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+  .chip{
+    font-family:var(--mono);font-size:12px;letter-spacing:.04em;text-transform:uppercase;
+    color:var(--ink-dim);background:var(--panel);border:1px solid var(--line-soft);
+    border-radius:999px;padding:7px 13px;cursor:pointer;transition:.15s;
+  }
+  .chip:hover{color:var(--ink);border-color:var(--violet);background:var(--panel-2)}
+  .chip[aria-pressed="true"]{color:#1A1000;background:var(--amber);border-color:var(--amber);font-weight:600}
+  .chip:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+  a.chip{display:inline-flex;align-items:center;min-height:44px}
+  .langs{display:flex;gap:6px;margin-left:auto}
+  .langbtn{
+    min-width:64px;min-height:44px;padding:8px 12px;
+    font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--ink-dim);
+    background:var(--panel);border:1px solid var(--line-soft);border-radius:12px;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:.15s;
+  }
+  .langbtn:hover{color:var(--ink);border-color:var(--violet);background:var(--panel-2)}
+  .langbtn[aria-pressed="true"]{color:#1A1000;background:var(--amber);border-color:var(--amber);font-weight:600}
+  .langbtn:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+
+  .grid{display:grid;grid-template-columns:minmax(0,1.35fr) 336px;gap:18px;align-items:start}
+  @media (max-width:920px){.grid{grid-template-columns:1fr}}
+  .stage{display:flex;flex-direction:column;gap:14px;min-width:0}
+
+  .screen{
+    position:relative;border-radius:18px;overflow:hidden;
+    border:1px solid var(--line);background:#02020A;
+    aspect-ratio:16/11;
+  }
+  @media (max-width:920px){.screen{aspect-ratio:4/3}}
+  canvas{display:block;width:100%;height:100%}
+
+  .verdict{
+    position:absolute;left:14px;right:58px;top:14px;display:flex;align-items:center;
+    flex-wrap:wrap;gap:6px 10px;pointer-events:none;
+  }
+  .landhint{
+    position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;
+    color:var(--ink-faint);background:rgba(10,9,20,.6);border:1px solid var(--line-soft);
+    border-radius:999px;padding:6px 13px;pointer-events:none;backdrop-filter:blur(6px);
+  }
+  .fpbar{
+    position:absolute;left:12px;top:12px;right:12px;display:flex;align-items:center;
+    gap:10px;flex-wrap:wrap;
+  }
+  .fpback{
+    font-family:var(--body);font-size:13px;font-weight:600;color:#1A1000;background:var(--amber);
+    border:0;border-radius:999px;padding:8px 16px;cursor:pointer;transition:.15s;
+    box-shadow:0 4px 18px rgba(0,0,0,.5);
+  }
+  .fpback:hover{background:#FFC877}
+  .fpback:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  .fpinfo{
+    font-family:var(--mono);font-size:11px;color:var(--ink);
+    text-shadow:0 1px 8px rgba(0,0,0,.95);
+  }
+  .fpctl{
+    position:absolute;left:0;right:0;bottom:12px;display:flex;justify-content:center;gap:8px;
+  }
+  .fpctl button{
+    width:46px;height:42px;border-radius:11px;cursor:pointer;
+    background:rgba(12,11,24,.62);border:1px solid rgba(255,255,255,.18);color:#fff;
+    font-family:var(--mono);font-size:15px;line-height:1;backdrop-filter:blur(6px);
+    touch-action:none;user-select:none;transition:.1s;
+  }
+  .fpctl button:active{background:rgba(255,180,84,.45)}
+  .fpctl button.jump{width:64px;font-size:11px;letter-spacing:.08em}
+  .fpctl button:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+  .screen.walking .clock{top:auto;bottom:62px}
+  @media (min-width:560px){.screen.walking .clock{bottom:14px}}
+  .screen.walking canvas{cursor:grab}
+  .screen.walking canvas:active{cursor:grabbing}
+  .screen.aiming canvas{cursor:crosshair}
+
+  .zoomers{position:absolute;right:12px;top:12px;display:flex;flex-direction:column;gap:6px}
+  .zoomers button{
+    width:32px;height:32px;border-radius:9px;cursor:pointer;
+    background:rgba(20,18,39,.72);border:1px solid var(--line);color:var(--ink);
+    font-family:var(--mono);font-size:16px;line-height:1;backdrop-filter:blur(6px);transition:.15s;
+  }
+  .zoomers button:hover{border-color:var(--violet);color:var(--amber)}
+  .zoomers button:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+
+  .namebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .namebar label{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-faint);
+  }
+  .namebar input{
+    flex:1 1 160px;min-width:0;
+    font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:-.01em;
+    color:var(--ink);background:transparent;border:0;border-bottom:1px dashed var(--line);
+    padding:2px 2px 4px;
+  }
+  .namebar input:hover{border-bottom-color:var(--violet)}
+  .namebar input:focus{outline:none;border-bottom-color:var(--amber);border-bottom-style:solid}
+
+  .facts{
+    background:var(--panel);border:1px solid var(--line-soft);border-radius:14px;padding:13px 15px;
+    display:flex;flex-direction:column;gap:6px;
+  }
+  .facts h2{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
+    color:var(--ink-faint);margin:0 0 2px;
+  }
+  .facts p{margin:0;font-size:13.5px;color:var(--ink-dim);line-height:1.45}
+  .facts p b{color:var(--ink);font-weight:600}
+
+  .mc{background:var(--panel);border:1px solid rgba(124,196,122,.35);border-radius:14px;overflow:hidden}
+  .mc summary{
+    list-style:none;cursor:pointer;padding:13px 15px;display:flex;align-items:baseline;
+    gap:10px;flex-wrap:wrap;transition:.15s;
+  }
+  .mc summary::-webkit-details-marker{display:none}
+  .mc summary:hover{background:#17251A}
+  .mc summary:focus-visible{outline:2px solid var(--violet);outline-offset:-2px}
+  .mctitle{font-family:var(--display);font-weight:700;font-size:16px;color:#9FE08C}
+  .mchint{font-size:12.5px;color:var(--ink-faint)}
+  .mc[open] summary{border-bottom:1px solid var(--line-soft)}
+  .mcbody{padding:13px 15px 15px;display:flex;flex-direction:column;gap:11px}
+  .mcfeel{margin:0;font-size:13.5px;color:var(--ink-dim);line-height:1.5}
+  .mcfeel b{color:var(--ink);font-weight:600}
+  .mclines{display:flex;flex-direction:column;gap:4px}
+  .mcline{
+    display:flex;align-items:center;gap:10px;width:100%;text-align:left;cursor:pointer;
+    padding:8px 10px;border-radius:9px;background:#0B0A16;border:1px solid var(--line-soft);
+    font-family:var(--mono);font-size:11.5px;color:#B7E8A8;transition:.12s;
+  }
+  .mcline:hover{border-color:#7CC47A;background:#101A10}
+  .mcline:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+  .mcline .cmd{flex:1 1 auto;min-width:0;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+  .mcline .cmd::-webkit-scrollbar{display:none}
+  .mcline .cp{
+    flex:0 0 auto;font-family:var(--body);font-size:10px;font-weight:600;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--ink-faint);
+  }
+  .mcline:hover .cp{color:#9FE08C}
+  .mcline.done{border-color:#9FE08C}
+  .mcline.done .cp{color:#9FE08C}
+  .mcrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .mccopy{
+    font-family:var(--body);font-size:12.5px;font-weight:600;color:#0E1F0C;background:#9FE08C;
+    border:0;border-radius:9px;padding:8px 14px;cursor:pointer;transition:.15s;
+  }
+  .mccopy:hover{background:#B6EFA6}
+  .mccopy:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+  .mcswatches{display:flex;gap:10px;flex-wrap:wrap}
+  .sw{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+  .sw i{width:14px;height:14px;border-radius:4px;border:1px solid rgba(255,255,255,.18);display:block}
+  .pill{
+    font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+    padding:5px 10px;border-radius:6px;white-space:nowrap;font-weight:600;
+    background:rgba(84,224,198,.16);color:var(--teal);border:1px solid rgba(84,224,198,.4);
+    backdrop-filter:blur(6px);
+  }
+  .pill.warn{background:rgba(255,180,84,.16);color:var(--amber);border-color:rgba(255,180,84,.42)}
+  .pill.bad{background:rgba(255,111,107,.16);color:var(--coral);border-color:rgba(255,111,107,.42)}
+  .headline{
+    font-family:var(--display);font-weight:700;font-size:clamp(15px,2.4vw,20px);letter-spacing:-.01em;
+    text-shadow:0 2px 16px rgba(0,0,0,.95),0 0 40px rgba(0,0,0,.7);text-wrap:balance;
+  }
+  .clock{
+    position:absolute;right:14px;bottom:14px;text-align:right;pointer-events:none;
+    font-family:var(--mono);text-shadow:0 2px 12px rgba(0,0,0,.95);
+  }
+  .clock .big{display:block;font-size:clamp(14px,2.6vw,19px);font-weight:600;color:var(--amber);font-variant-numeric:tabular-nums}
+  .clock .small{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+
+  .toast{
+    position:absolute;left:50%;top:52px;transform:translateX(-50%);
+    display:flex;align-items:center;gap:9px;pointer-events:none;
+    background:rgba(28,22,10,.88);border:1px solid var(--amber);border-radius:999px;
+    padding:8px 16px 8px 10px;backdrop-filter:blur(8px);
+    box-shadow:0 8px 30px rgba(0,0,0,.6);
+    opacity:0;transition:opacity .35s;
+  }
+  .toast.show{opacity:1}
+  .toast .medal{
+    width:22px;height:22px;border-radius:50%;background:var(--amber);color:#1A1000;
+    display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:600;flex:0 0 auto;
+  }
+  .toast b{font-family:var(--display);font-size:14px;color:var(--amber)}
+  .toast span{font-size:13px;color:var(--ink-dim)}
+
+  .readouts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  @media (max-width:620px){.readouts{grid-template-columns:repeat(2,1fr)}}
+  .tile{background:var(--panel);border:1px solid var(--line-soft);border-radius:12px;padding:10px 11px}
+  .tile dt{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 3px}
+  .tile dd{margin:0;font-family:var(--mono);font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .tile dd.hot{color:var(--coral)}
+  .tile dd.cold{color:#7FC4FF}
+  .tile dd.good{color:var(--teal)}
+  .tile.people{border-color:rgba(169,139,255,.45);background:linear-gradient(180deg,#1C1738,var(--panel))}
+  .tile.people dd{color:var(--violet)}
+  .tile.life{border-color:rgba(84,224,198,.42);background:linear-gradient(180deg,#0F2A2A,var(--panel))}
+  .tile.life dd{color:var(--teal)}
+  .tile.people dd.gone,.tile.life dd.gone{color:var(--coral)}
+
+  .restart{
+    position:absolute;left:50%;bottom:16px;transform:translateX(-50%);
+    font-family:var(--body);font-size:14px;font-weight:600;color:#1A1000;
+    background:var(--amber);border:0;border-radius:999px;padding:11px 22px;cursor:pointer;
+    box-shadow:0 6px 26px rgba(0,0,0,.6);transition:.15s;
+  }
+  .restart:hover{background:#FFC877;transform:translateX(-50%) translateY(-1px)}
+  .restart:focus-visible{outline:2px solid #fff;outline-offset:3px}
+
+  .console{
+    background:var(--panel);border:1px solid var(--line);border-radius:18px;
+    padding:16px;display:flex;flex-direction:column;gap:16px;
+  }
+  .block{display:flex;flex-direction:column;gap:11px}
+  .block > h2{
+    font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-faint);margin:0;padding-bottom:8px;border-bottom:1px solid var(--line-soft);
+  }
+  .knob{display:flex;flex-direction:column;gap:5px}
+  .knob .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .knob label{font-size:13px;font-weight:600;color:var(--ink)}
+  .knob .val{font-family:var(--mono);font-size:12px;color:var(--amber);font-variant-numeric:tabular-nums;text-align:right}
+  .knob.off{opacity:.45}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;margin:0;cursor:pointer}
+  input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:99px;background:var(--panel-2);border:1px solid var(--line-soft)}
+  input[type=range]::-moz-range-track{height:5px;border-radius:99px;background:var(--panel-2);border:1px solid var(--line-soft)}
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:16px;height:16px;border-radius:50%;margin-top:-6.5px;
+    background:var(--amber);border:2px solid var(--void);box-shadow:0 0 0 1px var(--amber),0 0 12px rgba(255,180,84,.55);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:14px;height:14px;border-radius:50%;
+    background:var(--amber);border:2px solid var(--void);box-shadow:0 0 0 1px var(--amber),0 0 12px rgba(255,180,84,.55);
+  }
+  input[type=range]:focus-visible{outline:2px solid var(--violet);outline-offset:4px;border-radius:8px}
+
+  .chaos{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .btn{
+    font-family:var(--body);font-size:12.5px;font-weight:600;color:var(--ink);
+    background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
+    padding:9px 8px;cursor:pointer;transition:.15s;text-align:center;
+  }
+  .btn:hover{border-color:var(--violet);background:#2A2450;transform:translateY(-1px)}
+  .btn:active{transform:translateY(0)}
+  .btn:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+  .btn.danger{color:#FFD2D0}
+  .btn.danger:hover{border-color:var(--coral);background:#3A1F30}
+  .btn.wide{grid-column:span 2}
+  .btn[aria-pressed="true"]{background:rgba(84,224,198,.16);border-color:var(--teal);color:var(--teal)}
+  .btn.restart-inline{grid-column:span 2;background:var(--panel-2);color:var(--amber);border:1px solid rgba(255,180,84,.4)}
+  .btn.restart-inline:hover{background:#3A2E1C;border-color:var(--amber)}
+
+  .throwlist{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .throw{
+    display:flex;align-items:center;gap:8px;text-align:left;
+    font-family:var(--body);font-size:12.5px;font-weight:600;color:var(--ink);
+    background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
+    padding:8px 9px;cursor:pointer;transition:.15s;
+  }
+  .throw:hover{border-color:var(--coral);background:#33203A;transform:translateY(-1px)}
+  .throw:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+  .throw .dot{width:15px;height:15px;border-radius:50%;flex:0 0 auto;box-shadow:inset -2px -2px 3px rgba(0,0,0,.55)}
+  .throw .mass{display:block;font-size:10px;font-weight:400;color:var(--ink-faint);font-family:var(--mono)}
+
+  .speeds{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+  .speed{
+    font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--ink-dim);
+    background:var(--panel-2);border:1px solid var(--line);border-radius:9px;
+    padding:8px 2px;cursor:pointer;transition:.12s;line-height:1.25;
+  }
+  .speed:hover{color:var(--ink);border-color:var(--violet)}
+  .speed[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#06231D}
+  .speed:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+  .hint{font-size:11.5px;color:var(--ink-faint);margin:0}
+
+  .side{display:flex;flex-direction:column;gap:18px;min-width:0}
+  .journal,.trophies{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px}
+  .journal h2,.trophies h2{
+    font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-faint);margin:0 0 10px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+  }
+  .trophies h2 b{color:var(--amber);font-weight:600;font-variant-numeric:tabular-nums}
+  .journal ol{list-style:none;margin:0;padding:0;max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+  .journal li{display:flex;gap:12px;padding:5px 2px;border-bottom:1px solid var(--line-soft);font-size:13px}
+  .journal li:last-child{border-bottom:0}
+  .journal .when{font-family:var(--mono);font-size:11px;color:var(--ink-faint);flex:0 0 96px;padding-top:2px;font-variant-numeric:tabular-nums}
+  .journal .what{color:var(--ink-dim)}
+  .journal li.big .what{color:var(--ink);font-weight:600}
+  .journal li.bad .what{color:var(--coral)}
+  .journal li.good .what{color:var(--teal)}
+  .journal li.gold .what{color:var(--amber);font-weight:600}
+
+  .trophies ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;max-height:360px;overflow-y:auto}
+  .trophies li{display:flex;gap:10px;align-items:flex-start}
+  .badge{
+    flex:0 0 auto;width:20px;height:20px;border-radius:50%;margin-top:1px;
+    border:1.5px solid var(--line);background:var(--panel-2);
+    display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:var(--ink-faint);
+  }
+  .trophies li.won .badge{background:var(--amber);border-color:var(--amber);color:#1A1000;font-weight:600}
+  .tname{font-size:13px;font-weight:600;color:var(--ink-faint);line-height:1.3}
+  .trophies li.won .tname{color:var(--ink)}
+  .thow{font-size:11.5px;color:var(--ink-faint);line-height:1.35}
+  .trophies li.won .thow{color:var(--ink-dim)}
+
+  footer{margin-top:22px;color:var(--ink-faint);font-size:12px;text-align:center}
+  @media (prefers-reduced-motion: reduce){.btn:hover{transform:none}}
+</style>
+</head>
+<body>
+<div class="lab">
+  <header class="masthead">
+    <h1>Planet Tinkerer</h1>
+    <p class="tagline" data-i18n="tagline">Grab a world, break the rules, fast-forward a billion years and see what you made.</p>
+    <a class="chip" href="https://mineclone.surge.sh/" id="btnBack" style="text-decoration:none" data-i18n="btn.back">⬅ Launchers</a>
+    <div class="langs" id="langSel" role="group" aria-label="Language / Språk / 语言">
+      <button class="langbtn" type="button" data-lang="sv" aria-pressed="false">🇸🇪 SV</button>
+      <button class="langbtn" type="button" data-lang="en" aria-pressed="false">🇬🇧 EN</button>
+      <button class="langbtn" type="button" data-lang="zh" aria-pressed="false">🇨🇳 中文</button>
+    </div>
+  </header>
+
+  <div class="worlds" id="worlds" role="group" aria-label="Starting worlds" data-i18n-aria="aria.worlds"></div>
+
+  <main class="grid">
+    <section class="stage">
+      <div class="screen">
+        <canvas id="sky" aria-label="A picture of the world you are tinkering with" data-i18n-aria="aria.canvas"></canvas>
+        <div class="verdict">
+          <span class="pill" id="pill">Civilisation</span>
+          <span class="headline" id="headline">Cities glow on the night side. Somebody is looking back.</span>
+        </div>
+        <div class="toast" id="toast" role="status" aria-live="polite">
+          <span class="medal">★</span><b id="toastName">Trophy</b><span id="toastHow"></span>
+        </div>
+        <div class="clock">
+          <span class="big" id="elapsed">0 years</span>
+          <span class="small" id="speedLabel">1 year a second</span>
+        </div>
+        <div class="zoomers" id="zoomers">
+          <button id="z-in" type="button" aria-label="Zoom in" data-i18n-aria="aria.zoomIn">+</button>
+          <button id="z-out" type="button" aria-label="Zoom out" data-i18n-aria="aria.zoomOut">−</button>
+        </div>
+        <button class="restart" id="restart" type="button" hidden data-i18n="btn.startAgain">Start again</button>
+        <div class="landhint" id="landhint" data-i18n="landhint">Click anywhere on the planet to go down there</div>
+        <div class="fpbar" id="fpbar" hidden>
+          <button class="fpback" id="fpback" type="button" data-i18n="fp.back">← Back to space</button>
+          <span class="fpinfo" id="fpinfo"></span>
+        </div>
+        <div class="fpctl" id="fpctl" hidden>
+          <button id="fp-left" type="button" aria-label="Turn left" data-i18n-aria="aria.fpLeft">◀</button>
+          <button id="fp-fwd" type="button" aria-label="Walk forward" data-i18n-aria="aria.fpFwd">▲</button>
+          <button id="fp-right" type="button" aria-label="Turn right" data-i18n-aria="aria.fpRight">▶</button>
+          <button id="fp-jump" class="jump" type="button" aria-label="Jump" data-i18n-aria="aria.fpJump" data-i18n="fp.jumpBtn">JUMP</button>
+        </div>
+      </div>
+
+      <div class="namebar">
+        <label for="wname" data-i18n="lbl.name">Name of this world</label>
+        <input id="wname" maxlength="26" value="Earth" spellcheck="false" autocomplete="off">
+      </div>
+
+      <dl class="readouts" id="readouts">
+        <div class="tile life"><dt data-i18n="r.life">Living things</dt><dd id="r-life">20 quintillion</dd></div>
+        <div class="tile people"><dt data-i18n="r.pop">People alive</dt><dd id="r-pop">8.20 billion</dd></div>
+        <div class="tile"><dt data-i18n="r.grav">Gravity</dt><dd id="r-grav">1.00 g</dd></div>
+        <div class="tile"><dt data-i18n="r.temp">Surface</dt><dd id="r-temp">15 °C</dd></div>
+        <div class="tile"><dt data-i18n="r.air">Air</dt><dd id="r-air">1.00 bar</dd></div>
+        <div class="tile"><dt data-i18n="r.water">Water</dt><dd id="r-water">Oceans</dd></div>
+        <div class="tile"><dt data-i18n="r.day">One day</dt><dd id="r-day">24 h</dd></div>
+        <div class="tile"><dt data-i18n="r.year">One year</dt><dd id="r-year">1.0 yr</dd></div>
+      </dl>
+
+      <section class="facts">
+        <h2 data-i18n="h.facts">If you were standing there</h2>
+        <p id="f1"></p><p id="f2"></p><p id="f3"></p><p id="f4"></p>
+      </section>
+
+      <section class="mc"><details id="mcbox">
+        <summary><span class="mctitle" data-i18n="mc.title">Visit it in Minecraft →</span><span class="mchint" data-i18n="mc.sub">Turn your planet into commands you can paste in</span></summary>
+        <div class="mcbody">
+          <p class="mcfeel" id="mcfeel"></p>
+          <p class="mchint" style="margin:0" data-i18n="mc.hint">Click a line to copy it, then paste it into Minecraft chat. Chat only takes one at a time.</p>
+          <div class="mclines" id="mccmds"></div>
+          <div class="mcrow">
+            <button class="mccopy" id="mccopy" type="button" data-i18n="mc.copyAll">Copy all commands</button>
+            <span class="mchint" id="mcnote" data-i18n-html="mc.note">Cheats on, Java 1.21.2+. On 1.20.5–1.21.1 write <code>minecraft:generic.gravity</code> instead.</span>
+          </div>
+          <div class="mcswatches" id="mcswatches"></div>
+        </div>
+      </details></section>
+
+      <section class="journal">
+        <h2 data-i18n="h.journal">What happened</h2>
+        <ol id="log"></ol>
+      </section>
+    </section>
+
+    <aside class="side">
+    <div class="console">
+      <div class="block">
+        <h2 data-i18n="h.build">Build the world</h2>
+        <div class="knob">
+          <div class="row"><label for="k-size" data-i18n="k.size">Size</label><span class="val" id="v-size">1.00×</span></div>
+          <input type="range" id="k-size" min="0" max="1000" value="500">
+        </div>
+        <div class="knob">
+          <div class="row"><label for="k-dens" data-i18n="k.dens">How heavy the rock is</label><span class="val" id="v-dens">5.51 g/cm³</span></div>
+          <input type="range" id="k-dens" min="0" max="1000" value="500">
+        </div>
+        <div class="knob">
+          <div class="row"><label for="k-dist" data-i18n="k.dist">Distance from the sun</label><span class="val" id="v-dist">1.00 AU</span></div>
+          <input type="range" id="k-dist" min="0" max="1000" value="500">
+        </div>
+        <div class="knob">
+          <div class="row"><label for="k-air" data-i18n="k.air">Air</label><span class="val" id="v-air">1.00×</span></div>
+          <input type="range" id="k-air" min="0" max="1000" value="500">
+        </div>
+        <div class="knob">
+          <div class="row"><label for="k-water" data-i18n="k.water">Water</label><span class="val" id="v-water">1.00×</span></div>
+          <input type="range" id="k-water" min="0" max="400" value="20">
+        </div>
+        <div class="knob">
+          <div class="row"><label for="k-spin" data-i18n="k.spin">Spin</label><span class="val" id="v-spin">1.00×</span></div>
+          <input type="range" id="k-spin" min="0" max="1000" value="500">
+        </div>
+      </div>
+
+      <div class="block">
+        <h2 data-i18n="h.moon">Moon &amp; rings</h2>
+        <div class="chaos">
+          <button class="btn" id="b-moon" aria-pressed="false">Add a moon</button>
+          <button class="btn" id="b-rings" aria-pressed="false">Add rings</button>
+        </div>
+        <div class="knob off" id="knob-msize">
+          <div class="row"><label for="k-msize" data-i18n="k.msize">Moon size</label><span class="val" id="v-msize">0.27×</span></div>
+          <input type="range" id="k-msize" min="6" max="45" value="27">
+        </div>
+        <div class="knob off" id="knob-mdist">
+          <div class="row"><label for="k-mdist" data-i18n="k.mdist">How far the moon sits</label><span class="val" id="v-mdist">6.0×</span></div>
+          <input type="range" id="k-mdist" min="30" max="160" value="60">
+        </div>
+        <p class="hint" data-i18n="hint.moon">Watch for the moon's shadow sliding across the planet.</p>
+      </div>
+
+      <div class="block">
+        <h2 data-i18n="h.wild">Do something wild</h2>
+        <div class="chaos">
+          <button class="btn" id="b-shrink" data-i18n="btn.shrink">Shrink 10×</button>
+          <button class="btn" id="b-grow" data-i18n="btn.grow">Grow 10×</button>
+          <button class="btn danger" id="b-crush" data-i18n="btn.crush">Squeeze it</button>
+          <button class="btn danger" id="b-rock" data-i18n="btn.rock">Throw an asteroid</button>
+          <button class="btn danger" id="b-freeze" data-i18n="btn.freeze">Big freeze</button>
+          <button class="btn danger" id="b-bake" data-i18n="btn.bake">Push it at the sun</button>
+          <button class="btn danger wide" id="b-smash" data-i18n="btn.smash">Smash another planet into it</button>
+          <button class="btn wide" id="b-random" data-i18n="btn.random">Roll a brand-new world</button>
+          <button class="btn restart-inline" id="b-restart" data-i18n="btn.restart">Restart this world</button>
+        </div>
+      </div>
+
+      <div class="block" id="picker" hidden>
+        <h2 data-i18n="h.picker">Pick what to throw at it</h2>
+        <div class="throwlist" id="throwlist"></div>
+        <button class="btn wide" id="b-cancel" data-i18n="btn.cancel">Never mind</button>
+      </div>
+
+      <div class="block">
+        <h2 data-i18n="h.speed">Speed up time</h2>
+        <div class="speeds" id="speeds"></div>
+        <p class="hint" data-i18n="hint.speed">Press space to pause or unpause. Nothing evolves while time is stopped.</p>
+      </div>
+    </div>
+
+    <section class="trophies">
+      <h2><span data-i18n="h.trophies">Trophies</span> <b id="tcount">0 / 17</b></h2>
+      <ul id="tlist"></ul>
+    </section>
+    </aside>
+  </main>
+
+  <footer data-i18n="footer">A toy, not a textbook — the numbers are close enough to be interesting, not close enough for NASA.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ================= helpers ================= */
+  const $ = id => document.getElementById(id);
+  const clamp = (v,a,b) => v<a?a:(v>b?b:v);
+  const mix = (a,b,t) => a+(b-a)*t;
+  const logScale = (min,max) => ({
+    toSlider: v => Math.round(1000*Math.log(clamp(v,min,max)/min)/Math.log(max/min)),
+    fromSlider: t => min*Math.pow(max/min, t/1000)
+  });
+  const SIZE = logScale(0.05,120), DENS = logScale(0.05,20), DIST = logScale(0.05,40);
+  const AIR  = logScale(0.002,60), SPIN = logScale(0.02,40);
+
+  /* ================= language ================= */
+  const L10N = {
+    en: {
+      "tagline":"Grab a world, break the rules, fast-forward a billion years and see what you made.",
+      "btn.back":"⬅ Launchers",
+      "aria.worlds":"Starting worlds",
+      "aria.canvas":"A picture of the world you are tinkering with",
+      "aria.zoomIn":"Zoom in", "aria.zoomOut":"Zoom out",
+      "btn.startAgain":"Start again",
+      "lbl.name":"Name of this world",
+      "r.life":"Living things", "r.pop":"People alive", "r.grav":"Gravity", "r.temp":"Surface",
+      "r.air":"Air", "r.water":"Water", "r.day":"One day", "r.year":"One year",
+      "r.lifeGone":"all gone", "r.lifeNoneYet":"none yet", "r.popGone":"all gone", "r.popNoneYet":"none yet",
+      "h.facts":"If you were standing there", "h.journal":"What happened", "h.build":"Build the world",
+      "k.size":"Size", "k.dens":"How heavy the rock is", "k.dist":"Distance from the sun",
+      "k.air":"Air", "k.water":"Water", "k.spin":"Spin",
+      "v.almostNone":"almost none", "v.boneDry":"bone dry",
+      "h.moon":"Moon & rings",
+      "btn.moonAdd":"Add a moon", "btn.moonRemove":"Remove the moon",
+      "btn.ringsAdd":"Add rings", "btn.ringsRemove":"Remove rings",
+      "k.msize":"Moon size", "k.mdist":"How far the moon sits",
+      "hint.moon":"Watch for the moon's shadow sliding across the planet.",
+      "h.wild":"Do something wild",
+      "btn.shrink":"Shrink 10×", "btn.grow":"Grow 10×", "btn.crush":"Squeeze it", "btn.rock":"Throw an asteroid",
+      "btn.freeze":"Big freeze", "btn.bake":"Push it at the sun", "btn.smash":"Smash another planet into it",
+      "btn.random":"Roll a brand-new world", "btn.restart":"Restart this world",
+      "h.picker":"Pick what to throw at it", "btn.cancel":"Never mind",
+      "h.speed":"Speed up time",
+      "hint.speed":"Press space to pause or unpause. Nothing evolves while time is stopped.",
+      "h.trophies":"Trophies",
+      "footer":"A toy, not a textbook — the numbers are close enough to be interesting, not close enough for NASA.",
+      "speed.0.label":"paused", "speed.0.top":"STOP", "speed.0.bot":"",
+      "speed.1.label":"1 year a second", "speed.1.top":"1", "speed.1.bot":"year/s",
+      "speed.2.label":"a thousand years a second", "speed.2.top":"1K", "speed.2.bot":"year/s",
+      "speed.3.label":"a million years a second", "speed.3.top":"1M", "speed.3.bot":"year/s",
+      "speed.4.label":"a billion years a second", "speed.4.top":"1B", "speed.4.bot":"year/s",
+      "preset.Earth":"Earth", "preset.Mars":"Mars", "preset.Venus":"Venus", "preset.Mercury":"Mercury",
+      "preset.Moon":"Moon", "preset.Jupiter":"Jupiter", "preset.Saturn":"Saturn", "preset.Titan":"Titan",
+      "preset.Pluto":"Pluto", "preset.Ocean world":"Ocean world", "preset.Rogue planet":"Rogue planet",
+      "preset.A star":"A star", "preset.Black hole":"Black hole",
+      "throw.rand":"A random rock", "throw.moon":"The Moon", "throw.mercury":"Mercury", "throw.mars":"Mars",
+      "throw.titan":"Titan", "throw.pluto":"Pluto", "throw.venus":"Venus", "throw.earth2":"Another Earth",
+      "throw.jupiter":"Jupiter", "throw.saturn":"Saturn", "throw.star":"A whole star", "throw.hole":"A black hole",
+      "throw.surprise":"a surprise", "throw.swallows":"swallows you", "throw.xEarth":"{n}× Earth",
+      "water.none":"none", "water.ice":"Frozen solid", "water.liquid":"Oceans", "water.steam":"Steam", "water.vapour":"Escaping",
+      "u.AU":"AU", "u.h":"h", "u.min":"min", "u.days":"days", "u.d":"d", "u.yr":"yr", "u.bar":"bar", "u.pNone":"none",
+      "u.kg":"kg", "u.cm":"cm", "u.m":"m",
+      "n.years0":"0 years", "n.years":"{n} years", "n.years1":"{n} year",
+      "n.kyears":"{n} thousand years", "n.myears":"{n} million years", "n.byears":"{n} billion years",
+      "n.thousand":"{n} thousand", "n.million":"{n} million", "n.billion":"{n} billion", "n.trillion":"{n} trillion",
+      "_big":[[1e21,"{n} sextillion"],[1e18,"{n} quintillion"],[1e15,"{n} quadrillion"],[1e12,"{n} trillion"],
+              [1e9,"{n} billion"],[1e6,"{n} million"],[1e3,"{n} thousand"]],
+      "f.hole.0":"You would be stretched into a thread of atoms long before you landed.",
+      "f.hole.1":"There is no surface. There is nowhere to stand.",
+      "f.hole.2":"Gravity here is past anything a number can usefully describe.",
+      "f.hole.3":"Not even light gets back out to tell you what happened.",
+      "f.star.0":"You would turn to vapour long before you arrived.",
+      "f.star.1":"The surface is <b>{temp}</b> — nothing solid can exist on it.",
+      "f.star.2":"It is not a place. It is a fire the size of a world.",
+      "f.star.3":"Stand a safe distance away and it keeps a planet warm for billions of years.",
+      "f.weigh":"If you weigh 40 kg on Earth, here you would weigh <b>{w}</b>.",
+      "f.almostNothing":"almost nothing",
+      "f.jumpNever":"One ordinary jump and you would never come back down.",
+      "f.jump":"A normal jump would take you <b>{h}</b> off the ground.",
+      "f.gas":"There is no ground at all — just gas getting thicker until it crushes you.",
+      "f.noAir":"There is no air. You would need a full space suit just to stand there.",
+      "f.thinAir":"The air is far too thin to breathe. Your blood would boil.",
+      "f.heavyAir":"The air is so heavy it would press on you like deep water.",
+      "f.tempFirst":"You could take a breath, but the temperature would get you first.",
+      "f.breathe":"You could actually stand here and breathe.",
+      "f.c0":"So cold the air itself would fall out of the sky as snow.",
+      "f.c1":"Colder than the worst Antarctic winter, by a lot.",
+      "f.c2":"Freezing. You would want a very serious coat.",
+      "f.c3":"A pleasant day out, honestly.",
+      "f.c4":"Hotter than the hottest desert on Earth.",
+      "f.c5":"Hot enough to cook you like an oven.",
+      "f.c6":"Hot enough to melt lead. Nothing can stand here at all.",
+      "verdict.hole.p":"Black hole", "verdict.hole.h":"You squeezed it out of existence. Light can't get out.",
+      "verdict.star.p":"Star", "verdict.star.h":"It got so heavy it caught fire. That's a star now.",
+      "verdict.gas.p":"Gas giant", "verdict.gas.h":"A huge ball of gas with storms the size of continents.",
+      "verdict.wrecked.p":"Wrecked", "verdict.wrecked.h":"The whole surface is melted from the crash. Give it time to cool.",
+      "verdict.wiped.p":"Wiped out", "verdict.wiped.h":"Every last person is gone. Nobody is left to see this.",
+      "verdict.civ.p":"Civilisation", "verdict.civ.h":"Cities glow on the night side. Somebody is looking back.",
+      "verdict.living.p":"Living world", "verdict.living.h":"Something is alive down there and it is spreading.",
+      "verdict.just.p":"Just right", "verdict.just.h":"Warm, wet and breathable. Life could start here — give it time.",
+      "verdict.molten.p":"Molten", "verdict.molten.h":"The ground is glowing. Rock runs like water.",
+      "verdict.furnace.p":"Furnace", "verdict.furnace.h":"Thick air traps every bit of heat. Hot enough to melt lead.",
+      "verdict.cooker.p":"Pressure cooker", "verdict.cooker.h":"Thick air traps the heat and the oceans turned to steam.",
+      "verdict.airless.p":"Airless", "verdict.airless.h":"No air at all. Just rock, dust and craters.",
+      "verdict.freeze.p":"Deep freeze", "verdict.freeze.h":"Frozen from pole to pole. Even the air wants to fall as snow.",
+      "verdict.crushing.p":"Crushing", "verdict.crushing.h":"Gravity so strong you could not stand up, let alone jump.",
+      "verdict.empty.p":"Empty", "verdict.empty.h":"Quiet now. It had life once.",
+      "verdict.barren.p":"Barren", "verdict.barren.h":"Nothing much is happening down there yet.",
+      "trophy.tiny.name":"Pocket World", "trophy.tiny.how":"Shrink a planet ten times smaller",
+      "trophy.giant.name":"Absolute Unit", "trophy.giant.how":"Grow a world to ten times Earth",
+      "trophy.star.name":"Let There Be Light", "trophy.star.how":"Make a world heavy enough to catch fire",
+      "trophy.hole.name":"Point of No Return", "trophy.hole.how":"Squeeze a world into a black hole",
+      "trophy.snowball.name":"Snowball", "trophy.snowball.how":"Freeze a world solid from pole to pole",
+      "trophy.furnace.name":"Hot Rock", "trophy.furnace.how":"Get the surface above 500 °C",
+      "trophy.spark.name":"Spark of Life", "trophy.spark.how":"Watch life begin on a dead world",
+      "trophy.crowded.name":"Standing Room Only", "trophy.crowded.how":"Have 100 billion people alive at once",
+      "trophy.ancient.name":"The Long Haul", "trophy.ancient.how":"Keep people alive for a billion years",
+      "trophy.moonlit.name":"Moonstruck", "trophy.moonlit.how":"Catch the moon's shadow on the planet",
+      "trophy.rings.name":"Ringmaster", "trophy.rings.how":"Put rings around a world",
+      "trophy.smash.name":"Demolition", "trophy.smash.how":"Smash another planet into yours",
+      "trophy.escape.name":"Escape Plan", "trophy.escape.how":"Push them until they build rockets",
+      "trophy.ocean.name":"Water World", "trophy.ocean.how":"Drown a living world in ocean",
+      "trophy.namer.name":"Mine Now", "trophy.namer.how":"Give a world a name of your own",
+      "trophy.grand.name":"Grand Tour", "trophy.grand.how":"Visit every starting world",
+      "log.trophy":"Trophy: {name} — {how}.",
+      "stage.0":"Tiny specks of life appeared in the water.",
+      "stage.1":"Green slime is spreading across the shallow seas.",
+      "stage.2":"Strange soft creatures are swimming around.",
+      "stage.3":"Plants and animals crawled out onto the land.",
+      "stage.4":"Clever animals. They use tools and shout at each other.",
+      "stage.5":"Cities. Lights on the night side. They are looking up at you.",
+      "pop.0":"A million people are alive down there.",
+      "pop.1":"A billion people. They are everywhere now.",
+      "pop.2":"Ten billion people. The planet is getting crowded.",
+      "pop.3":"A hundred billion people. This world is packed.",
+      "pop.4":"A trillion people. Nothing like this has ever existed.",
+      "alien.0":"A radio signal from the surface: “Hello? Is anybody out there?”",
+      "alien.1":"They built telescopes. They are looking straight back at you.",
+      "alien.2":"They sent a probe past their moon and celebrated for a week.",
+      "alien.3":"They are arguing about why their sky keeps changing.",
+      "alien.4":"They drew a map of the whole sky and put themselves in the middle.",
+      "alien.5":"They sent music into space, just in case somebody is listening.",
+      "alien.6":"They think something enormous is watching them. They are right.",
+      "panic.0":"A message from the surface: “Something is wrong with our sky.”",
+      "panic.1":"“The oceans are going. If anyone is listening, please.”",
+      "panic.2":"“We do not know what is doing this to us.”",
+      "panic.3":"“Please stop.”",
+      "log.rockets":"They are building rockets as fast as they can.",
+      "log.people":"The clever animals became people. There are a few million of them.",
+      "log.lastPeople":"The last people are gone.",
+      "log.everyoneGone":"Everyone on it is gone.",
+      "log.airGone":"The air drifted off into space. It is a bare rock now.",
+      "log.waterGone":"The last of the water boiled away.",
+      "log.allDied":"Everything died. The world went quiet.",
+      "log.ev.asteroid":"An asteroid slammed in and threw dust across the sky.",
+      "log.ev.bigDied":"Most of the big creatures did not survive it.",
+      "log.ev.fraction":"Only a fraction of the people made it through.",
+      "log.ev.volcano":"Volcanoes erupted everywhere and coughed more air into the sky.",
+      "log.ev.flare":"The sun flared. The sky glowed for a hundred years.",
+      "log.ev.comets":"A swarm of icy comets crashed down and melted into water.",
+      "log.eclipse":"The moon's shadow is sliding across the planet.",
+      "log.escaped":"A handful of rockets made it off the planet. Those ones got away.",
+      "log.introStar":"Loaded a small star. Try making it smaller.",
+      "log.introHole":"Loaded a black hole. Nothing gets out of that.",
+      "log.loaded":"Loaded {name}.",
+      "log.boot":"Earth, as it is right now. Go on, change something.",
+      "log.restart":"Back to the start. Try something different.",
+      "log.random":"Rolled a brand-new world out of nothing.",
+      "log.incomingRand":"Something big is coming in fast.",
+      "log.incoming":"{name} is coming in fast.",
+      "log.smash.swallowed":"It swallowed your world whole. There is nothing left to look at.",
+      "log.smash.star":"Your world vanished into it. What is left is a star.",
+      "log.smash.lost":"Your world basically lost. It is mostly {name} now.",
+      "log.smash.otherOne":"the other one",
+      "log.smash.direct":"A direct hit. The whole surface melted and the continents are gone.",
+      "log.smash.solid":"A solid hit. New craters, new coastlines, and it is running hot.",
+      "log.smash.nobody":"Nobody survived that.",
+      "log.smash.allDead":"Everything that was alive is gone.",
+      "log.smash.moon":"Some of the splash flew into orbit and clumped into a moon.",
+      "log.moonAdd":"Pulled a moon into orbit around it.",
+      "log.moonRemove":"Took the moon away.",
+      "log.ringsAdd":"Wrapped a belt of ice and dust around it.",
+      "log.ringsRemove":"Swept the rings away.",
+      "log.shrink":"Shrunk it to a tenth of the size.",
+      "log.grow":"Blew it up to ten times bigger.",
+      "log.crushHole":"Squeezed too far. It collapsed into a black hole.",
+      "log.crushBall":"Squeezed it into a tiny ball. Same weight, way less room.",
+      "log.rock":"You threw a giant asteroid at it. New craters, new coastlines.",
+      "log.rockDied":"That wiped out most of the big animals.",
+      "log.freeze":"Shoved it further out. Everything is icing over.",
+      "log.bake":"Pushed it closer to the sun. It is getting hot.",
+      "trophy.boots.name":"Boots on the Ground", "trophy.boots.how":"Land on a world and walk around on it",
+      "landhint":"Click anywhere on the planet to go down there",
+      "fp.back":"← Back to space",
+      "aria.fpLeft":"Turn left", "aria.fpFwd":"Walk forward", "aria.fpRight":"Turn right", "aria.fpJump":"Jump",
+      "fp.jumpBtn":"JUMP",
+      "fp.info":"{name} · {temp} · {g} g · jump {jump} blocks",
+      "fp.thisWorld":"this world", "fp.it":"it",
+      "fp.noGas":"A gas giant has no ground. There is nothing to land on.",
+      "fp.noStar":"You cannot stand on a star.",
+      "fp.noHole":"Nothing stands on a black hole.",
+      "fp.wet":"You landed in the middle of the ocean. Aim at a green or brown bit next time.",
+      "fp.landed":"You went down and landed on {name}.",
+      "fp.groundGone":"The ground went out from under you.",
+      "mc.title":"Visit it in Minecraft →",
+      "mc.sub":"Turn your planet into commands you can paste in",
+      "mc.hint":"Click a line to copy it, then paste it into Minecraft chat. Chat only takes one at a time.",
+      "mc.copyAll":"Copy all commands", "mc.copiedAll":"Copied all of them!", "mc.copyFail":"Click each line instead",
+      "mc.note":"Cheats on, Java 1.21.2+. On 1.20.5–1.21.1 write <code>minecraft:generic.gravity</code> instead.",
+      "mc.copy":"copy", "mc.copied":"copied", "mc.select":"select it",
+      "mc.ariaCopy":"Copy: {cmd}",
+      "mc.sw.sky":"sky", "mc.sw.fog":"fog", "mc.sw.grass":"grass", "mc.sw.water":"water",
+      "mc.feel":"On <b>{name}</b> you would jump {jump} and fall <b>{fall}</b> before it hurt. Your whole world would be <b>{border} blocks</b> across. Best place to build: {biome}.",
+      "mc.jumpOff":"<b>straight off the map</b>",
+      "mc.jumpHigh":"<b>{n} blocks</b> high",
+      "mc.blocks":"{n} blocks", "mc.blocks1":"{n} block",
+      "mc.thisWorld":"this world",
+      "mc.biome.hole":"nowhere. There is no standing on this one",
+      "mc.biome.star":"the Nether, and even that is too cool",
+      "mc.biome.gas":"nothing solid to build on — you would need floating platforms",
+      "mc.biome.end":"the End — black sky, no weather, just like an airless world",
+      "mc.biome.nether":"the Nether, or a basalt delta",
+      "mc.biome.taiga":"a snowy taiga or ice spikes",
+      "mc.biome.ocean":"an ocean — build on islands, there is barely any land",
+      "mc.biome.desert":"a badlands or desert",
+      "mc.biome.plains":"a plains or forest",
+      "teach.ice":"The ice is spreading, and white ice throws sunlight straight back out — so it gets colder, so more ice. Once this starts it is very hard to stop.",
+      "teach.vap":"Warm oceans are pushing water vapour into the air, and water vapour traps heat, which warms the oceans further. This is how Venus ended up the way it is.",
+      "teach.therm":"Rain is weathering the rock and pulling carbon out of the sky. A wet world slowly nudges its own temperature back — that is why Earth stays steady.",
+      "teach.volc":"Under all that ice nothing is weathering the rock, so the volcanoes are slowly stacking the air back up. Wait long enough and a frozen world can thaw itself out.",
+      "teach.sun":"The sun is slowly getting brighter, the way real stars do as they age. Left alone long enough, that alone will cook this place.",
+      "teach.field":"Nothing here makes a magnetic field — too light, or turning too slowly — so the solar wind is peeling the air away. That is exactly how Mars lost its."
+    },
+    sv: {
+      "tagline":"Ta en värld, bryt mot reglerna, spola fram en miljard år och se vad du skapade.",
+      "btn.back":"⬅ Startsidan",
+      "aria.worlds":"Startvärldar",
+      "aria.canvas":"En bild av världen du pillar på",
+      "aria.zoomIn":"Zooma in", "aria.zoomOut":"Zooma ut",
+      "btn.startAgain":"Börja om",
+      "lbl.name":"Världens namn",
+      "r.life":"Levande varelser", "r.pop":"Levande människor", "r.grav":"Tyngdkraft", "r.temp":"Yta",
+      "r.air":"Luft", "r.water":"Vatten", "r.day":"Ett dygn", "r.year":"Ett år",
+      "r.lifeGone":"allt borta", "r.lifeNoneYet":"inget än", "r.popGone":"alla borta", "r.popNoneYet":"inga än",
+      "h.facts":"Om du stod där", "h.journal":"Vad som hände", "h.build":"Bygg världen",
+      "k.size":"Storlek", "k.dens":"Hur tung stenen är", "k.dist":"Avstånd från solen",
+      "k.air":"Luft", "k.water":"Vatten", "k.spin":"Snurr",
+      "v.almostNone":"nästan ingen", "v.boneDry":"knastertorr",
+      "h.moon":"Måne & ringar",
+      "btn.moonAdd":"Lägg till en måne", "btn.moonRemove":"Ta bort månen",
+      "btn.ringsAdd":"Lägg till ringar", "btn.ringsRemove":"Ta bort ringarna",
+      "k.msize":"Månens storlek", "k.mdist":"Hur långt bort månen är",
+      "hint.moon":"Håll utkik efter månens skugga som glider över planeten.",
+      "h.wild":"Gör något galet",
+      "btn.shrink":"Krymp 10×", "btn.grow":"Förstora 10×", "btn.crush":"Pressa ihop den", "btn.rock":"Kasta en asteroid",
+      "btn.freeze":"Djupfrys den", "btn.bake":"Knuffa den mot solen", "btn.smash":"Smäll in en annan planet i den",
+      "btn.random":"Slumpa fram en helt ny värld", "btn.restart":"Starta om den här världen",
+      "h.picker":"Välj vad du vill kasta på den", "btn.cancel":"Strunt samma",
+      "h.speed":"Snabbspola tiden",
+      "hint.speed":"Tryck mellanslag för att pausa eller fortsätta. Inget utvecklas medan tiden står stilla.",
+      "h.trophies":"Troféer",
+      "footer":"En leksak, inte en lärobok – siffrorna är tillräckligt nära för att vara spännande, men inte tillräckligt nära för NASA.",
+      "speed.0.label":"pausad", "speed.0.top":"STOPP", "speed.0.bot":"",
+      "speed.1.label":"1 år i sekunden", "speed.1.top":"1", "speed.1.bot":"år/s",
+      "speed.2.label":"tusen år i sekunden", "speed.2.top":"1K", "speed.2.bot":"år/s",
+      "speed.3.label":"en miljon år i sekunden", "speed.3.top":"1M", "speed.3.bot":"år/s",
+      "speed.4.label":"en miljard år i sekunden", "speed.4.top":"1MD", "speed.4.bot":"år/s",
+      "preset.Earth":"Jorden", "preset.Mars":"Mars", "preset.Venus":"Venus", "preset.Mercury":"Merkurius",
+      "preset.Moon":"Månen", "preset.Jupiter":"Jupiter", "preset.Saturn":"Saturnus", "preset.Titan":"Titan",
+      "preset.Pluto":"Pluto", "preset.Ocean world":"Havsvärld", "preset.Rogue planet":"Vilsen planet",
+      "preset.A star":"En stjärna", "preset.Black hole":"Svart hål",
+      "throw.rand":"En slumpad sten", "throw.moon":"Månen", "throw.mercury":"Merkurius", "throw.mars":"Mars",
+      "throw.titan":"Titan", "throw.pluto":"Pluto", "throw.venus":"Venus", "throw.earth2":"En till jord",
+      "throw.jupiter":"Jupiter", "throw.saturn":"Saturnus", "throw.star":"En hel stjärna", "throw.hole":"Ett svart hål",
+      "throw.surprise":"en överraskning", "throw.swallows":"slukar dig", "throw.xEarth":"{n}× jorden",
+      "water.none":"inget", "water.ice":"Bottenfruset", "water.liquid":"Hav", "water.steam":"Ånga", "water.vapour":"Läcker ut",
+      "u.AU":"AU", "u.h":"h", "u.min":"min", "u.days":"dagar", "u.d":"d", "u.yr":"år", "u.bar":"bar", "u.pNone":"ingen",
+      "u.kg":"kg", "u.cm":"cm", "u.m":"m",
+      "n.years0":"0 år", "n.years":"{n} år",
+      "n.kyears":"{n} tusen år", "n.myears":"{n} miljoner år", "n.myears1":"{n} miljon år",
+      "n.byears":"{n} miljarder år", "n.byears1":"{n} miljard år",
+      "n.thousand":"{n} tusen", "n.million":"{n} miljoner", "n.million1":"{n} miljon",
+      "n.billion":"{n} miljarder", "n.billion1":"{n} miljard", "n.trillion":"{n} biljoner", "n.trillion1":"{n} biljon",
+      "_big":[[1e21,"{n} triljarder","{n} triljard"],[1e18,"{n} triljoner","{n} triljon"],[1e15,"{n} biljarder","{n} biljard"],
+              [1e12,"{n} biljoner","{n} biljon"],[1e9,"{n} miljarder","{n} miljard"],[1e6,"{n} miljoner","{n} miljon"],[1e3,"{n} tusen"]],
+      "f.hole.0":"Du skulle dras ut till en tunn tråd av atomer långt innan du landade.",
+      "f.hole.1":"Det finns ingen yta. Det finns ingenstans att stå.",
+      "f.hole.2":"Tyngdkraften här är bortom allt som en siffra kan beskriva.",
+      "f.hole.3":"Inte ens ljuset kommer ut igen för att berätta vad som hände.",
+      "f.star.0":"Du skulle förångas långt innan du kom fram.",
+      "f.star.1":"Ytan är <b>{temp}</b> – inget fast kan finnas där.",
+      "f.star.2":"Det är ingen plats. Det är en eld stor som en värld.",
+      "f.star.3":"Håll dig på säkert avstånd så håller den en planet varm i miljarder år.",
+      "f.weigh":"Om du väger 40 kg på jorden skulle du väga <b>{w}</b> här.",
+      "f.almostNothing":"nästan ingenting",
+      "f.jumpNever":"Ett vanligt hopp och du skulle aldrig komma ner igen.",
+      "f.jump":"Ett vanligt hopp skulle ta dig <b>{h}</b> upp från marken.",
+      "f.gas":"Det finns ingen mark alls – bara gas som blir tjockare tills den krossar dig.",
+      "f.noAir":"Det finns ingen luft. Du skulle behöva en hel rymddräkt bara för att stå där.",
+      "f.thinAir":"Luften är alldeles för tunn att andas. Ditt blod skulle koka.",
+      "f.heavyAir":"Luften är så tung att den skulle trycka på dig som djupt vatten.",
+      "f.tempFirst":"Du skulle kunna ta ett andetag, men temperaturen tar dig först.",
+      "f.breathe":"Du skulle faktiskt kunna stå här och andas.",
+      "f.c0":"Så kallt att själva luften skulle falla ner från himlen som snö.",
+      "f.c1":"Kallare än den värsta vintern på Antarktis, med råge.",
+      "f.c2":"Iskallt. Du skulle behöva en rejäl jacka.",
+      "f.c3":"En riktigt skön dag, faktiskt.",
+      "f.c4":"Varmare än den hetaste öknen på jorden.",
+      "f.c5":"Tillräckligt varmt för att grädda dig som i en ugn.",
+      "f.c6":"Tillräckligt varmt för att smälta bly. Inget kan stå här alls.",
+      "verdict.hole.p":"Svart hål", "verdict.hole.h":"Du pressade ihop den tills den försvann. Ljuset kommer inte ut.",
+      "verdict.star.p":"Stjärna", "verdict.star.h":"Den blev så tung att den fattade eld. Nu är det en stjärna.",
+      "verdict.gas.p":"Gasjätte", "verdict.gas.h":"En enorm boll av gas med stormar stora som kontinenter.",
+      "verdict.wrecked.p":"Sönderslagen", "verdict.wrecked.h":"Hela ytan har smält av kraschen. Ge den tid att svalna.",
+      "verdict.wiped.p":"Utplånad", "verdict.wiped.h":"Varenda människa är borta. Ingen finns kvar som kan se det här.",
+      "verdict.civ.p":"Civilisation", "verdict.civ.h":"Städer lyser på nattsidan. Någon tittar tillbaka.",
+      "verdict.living.p":"Levande värld", "verdict.living.h":"Något lever där nere och det sprider sig.",
+      "verdict.just.p":"Precis lagom", "verdict.just.h":"Varmt, blött och går att andas. Liv kan börja här – ge det tid.",
+      "verdict.molten.p":"Smält", "verdict.molten.h":"Marken glöder. Sten rinner som vatten.",
+      "verdict.furnace.p":"Ugn", "verdict.furnace.h":"Tjock luft fångar all värme. Varmt nog att smälta bly.",
+      "verdict.cooker.p":"Tryckkokare", "verdict.cooker.h":"Tjock luft fångar värmen och haven har blivit ånga.",
+      "verdict.airless.p":"Luftlös", "verdict.airless.h":"Ingen luft alls. Bara sten, damm och kratrar.",
+      "verdict.freeze.p":"Djupfryst", "verdict.freeze.h":"Fruset från pol till pol. Till och med luften vill falla som snö.",
+      "verdict.crushing.p":"Krossande", "verdict.crushing.h":"Tyngdkraften är så stark att du inte kunde stå upp, än mindre hoppa.",
+      "verdict.empty.p":"Tom", "verdict.empty.h":"Tyst nu. Här fanns liv en gång.",
+      "verdict.barren.p":"Kal", "verdict.barren.h":"Inte mycket händer där nere än.",
+      "trophy.tiny.name":"Fickvärld", "trophy.tiny.how":"Krymp en planet tio gånger",
+      "trophy.giant.name":"Bamsing", "trophy.giant.how":"Förstora en värld till tio gånger jorden",
+      "trophy.star.name":"Varde ljus", "trophy.star.how":"Gör en värld så tung att den fattar eld",
+      "trophy.hole.name":"Ingen återvändo", "trophy.hole.how":"Pressa ihop en värld till ett svart hål",
+      "trophy.snowball.name":"Snöboll", "trophy.snowball.how":"Frys en värld bottenfrusen från pol till pol",
+      "trophy.furnace.name":"Het sten", "trophy.furnace.how":"Få ytan över 500 °C",
+      "trophy.spark.name":"Livsgnista", "trophy.spark.how":"Se liv börja på en död värld",
+      "trophy.crowded.name":"Bara ståplats", "trophy.crowded.how":"Ha 100 miljarder människor vid liv samtidigt",
+      "trophy.ancient.name":"Långkörare", "trophy.ancient.how":"Håll människor vid liv i en miljard år",
+      "trophy.moonlit.name":"Månskugga", "trophy.moonlit.how":"Fånga månens skugga på planeten",
+      "trophy.rings.name":"Ringmästare", "trophy.rings.how":"Sätt ringar runt en värld",
+      "trophy.smash.name":"Rivning", "trophy.smash.how":"Smäll in en annan planet i din",
+      "trophy.escape.name":"Flyktplan", "trophy.escape.how":"Pressa dem tills de bygger raketer",
+      "trophy.ocean.name":"Vattenvärld", "trophy.ocean.how":"Dränk en levande värld i hav",
+      "trophy.namer.name":"Min nu", "trophy.namer.how":"Ge en värld ett eget namn",
+      "trophy.grand.name":"Stora rundturen", "trophy.grand.how":"Besök varenda startvärld",
+      "log.trophy":"Trofé: {name} – {how}.",
+      "stage.0":"Pyttesmå prickar av liv dök upp i vattnet.",
+      "stage.1":"Grönt slem sprider sig över de grunda haven.",
+      "stage.2":"Konstiga mjuka varelser simmar omkring.",
+      "stage.3":"Växter och djur kröp upp på land.",
+      "stage.4":"Smarta djur. De använder verktyg och skriker på varandra.",
+      "stage.5":"Städer. Ljus på nattsidan. De tittar upp på dig.",
+      "pop.0":"En miljon människor lever där nere.",
+      "pop.1":"En miljard människor. De är överallt nu.",
+      "pop.2":"Tio miljarder människor. Planeten börjar bli trång.",
+      "pop.3":"Hundra miljarder människor. Den här världen är proppfull.",
+      "pop.4":"En biljon människor. Något sådant har aldrig funnits.",
+      "alien.0":"En radiosignal från ytan: ”Hallå? Är det någon där ute?”",
+      "alien.1":"De byggde teleskop. De tittar rakt tillbaka på dig.",
+      "alien.2":"De skickade en sond förbi sin måne och firade i en vecka.",
+      "alien.3":"De bråkar om varför deras himmel hela tiden förändras.",
+      "alien.4":"De ritade en karta över hela himlen och satte sig själva i mitten.",
+      "alien.5":"De skickade musik ut i rymden, ifall någon lyssnar.",
+      "alien.6":"De tror att något enormt tittar på dem. De har rätt.",
+      "panic.0":"Ett meddelande från ytan: ”Något är fel med vår himmel.”",
+      "panic.1":"”Haven försvinner. Om någon lyssnar, snälla.”",
+      "panic.2":"”Vi vet inte vad som gör det här mot oss.”",
+      "panic.3":"”Snälla, sluta.”",
+      "log.rockets":"De bygger raketer så fort de bara kan.",
+      "log.people":"De smarta djuren blev människor. Det finns några miljoner av dem.",
+      "log.lastPeople":"De sista människorna är borta.",
+      "log.everyoneGone":"Alla på den är borta.",
+      "log.airGone":"Luften drev iväg ut i rymden. Nu är det en kal sten.",
+      "log.waterGone":"Det sista vattnet kokade bort.",
+      "log.allDied":"Allt dog. Världen blev tyst.",
+      "log.ev.asteroid":"En asteroid smällde in och kastade damm över himlen.",
+      "log.ev.bigDied":"De flesta av de stora djuren överlevde inte.",
+      "log.ev.fraction":"Bara en bråkdel av människorna klarade sig.",
+      "log.ev.volcano":"Vulkaner fick utbrott överallt och hostade upp mer luft i himlen.",
+      "log.ev.flare":"Solen flammade till. Himlen glödde i hundra år.",
+      "log.ev.comets":"En svärm iskometer kraschade ner och smälte till vatten.",
+      "log.eclipse":"Månens skugga glider över planeten.",
+      "log.escaped":"En handfull raketer tog sig från planeten. De kom undan.",
+      "log.introStar":"Laddade en liten stjärna. Prova att göra den mindre.",
+      "log.introHole":"Laddade ett svart hål. Inget kommer ut därifrån.",
+      "log.loaded":"Laddade {name}.",
+      "log.boot":"Jorden, precis som den är just nu. Kom igen, ändra något.",
+      "log.restart":"Tillbaka till start. Prova något annat.",
+      "log.random":"Slumpade fram en helt ny värld ur ingenting.",
+      "log.incomingRand":"Något stort kommer in i hög fart.",
+      "log.incoming":"{name} kommer in i hög fart.",
+      "log.smash.swallowed":"Den slukade din värld hel. Det finns inget kvar att titta på.",
+      "log.smash.star":"Din värld försvann in i den. Det som är kvar är en stjärna.",
+      "log.smash.lost":"Din värld förlorade typ. Den är mest {name} nu.",
+      "log.smash.otherOne":"den andra",
+      "log.smash.direct":"En fullträff. Hela ytan smälte och kontinenterna är borta.",
+      "log.smash.solid":"En rejäl träff. Nya kratrar, nya kuster, och den är glödhet.",
+      "log.smash.nobody":"Ingen överlevde det.",
+      "log.smash.allDead":"Allt som levde är borta.",
+      "log.smash.moon":"En del av skvätten flög upp i omloppsbana och klumpade ihop sig till en måne.",
+      "log.moonAdd":"Drog in en måne i omloppsbana runt den.",
+      "log.moonRemove":"Tog bort månen.",
+      "log.ringsAdd":"Lade ett bälte av is och damm runt den.",
+      "log.ringsRemove":"Sopade bort ringarna.",
+      "log.shrink":"Krympte den till en tiondel.",
+      "log.grow":"Blåste upp den tio gånger större.",
+      "log.crushHole":"Pressade för hårt. Den kollapsade till ett svart hål.",
+      "log.crushBall":"Pressade ihop den till en pytteliten boll. Samma vikt, mycket mindre plats.",
+      "log.rock":"Du kastade en jätteasteroid på den. Nya kratrar, nya kuster.",
+      "log.rockDied":"Det utplånade de flesta stora djuren.",
+      "log.freeze":"Knuffade ut den längre bort. Allt fryser till is.",
+      "log.bake":"Knuffade den närmare solen. Det börjar bli hett.",
+      "trophy.boots.name":"Fötterna på marken", "trophy.boots.how":"Landa på en värld och gå omkring på den",
+      "landhint":"Klicka var som helst på planeten för att åka ner dit",
+      "fp.back":"← Tillbaka till rymden",
+      "aria.fpLeft":"Sväng vänster", "aria.fpFwd":"Gå framåt", "aria.fpRight":"Sväng höger", "aria.fpJump":"Hoppa",
+      "fp.jumpBtn":"HOPPA",
+      "fp.info":"{name} · {temp} · {g} g · hopp {jump} block",
+      "fp.thisWorld":"den här världen", "fp.it":"den",
+      "fp.noGas":"En gasjätte har ingen mark. Det finns inget att landa på.",
+      "fp.noStar":"Du kan inte stå på en stjärna.",
+      "fp.noHole":"Ingen kan stå på ett svart hål.",
+      "fp.wet":"Du landade mitt ute i havet. Sikta på något grönt eller brunt nästa gång.",
+      "fp.landed":"Du åkte ner och landade på {name}.",
+      "fp.groundGone":"Marken försvann under dig.",
+      "mc.title":"Besök den i Minecraft →",
+      "mc.sub":"Gör om din planet till kommandon du kan klistra in",
+      "mc.hint":"Klicka på en rad för att kopiera den och klistra sedan in den i Minecraft-chatten. Chatten tar bara en i taget.",
+      "mc.copyAll":"Kopiera alla kommandon", "mc.copiedAll":"Kopierade allihop!", "mc.copyFail":"Klicka på varje rad i stället",
+      "mc.note":"Fusk på, Java 1.21.2+. På 1.20.5–1.21.1 skriver du <code>minecraft:generic.gravity</code> i stället.",
+      "mc.copy":"kopiera", "mc.copied":"kopierad", "mc.select":"markera den",
+      "mc.ariaCopy":"Kopiera: {cmd}",
+      "mc.sw.sky":"himmel", "mc.sw.fog":"dimma", "mc.sw.grass":"gräs", "mc.sw.water":"vatten",
+      "mc.feel":"På <b>{name}</b> skulle du hoppa {jump} och kunna falla <b>{fall}</b> innan det gjorde ont. Hela din värld skulle vara <b>{border} block</b> bred. Bästa stället att bygga på: {biome}.",
+      "mc.jumpOff":"<b>rakt ut ur kartan</b>",
+      "mc.jumpHigh":"<b>{n} block</b> högt",
+      "mc.blocks":"{n} block",
+      "mc.thisWorld":"den här världen",
+      "mc.biome.hole":"ingenstans. Det går inte att stå på den här",
+      "mc.biome.star":"Nether, och till och med det är för svalt",
+      "mc.biome.gas":"inget fast att bygga på – du skulle behöva svävande plattformar",
+      "mc.biome.end":"The End – svart himmel, inget väder, precis som en luftlös värld",
+      "mc.biome.nether":"Nether, eller ett basaltdelta",
+      "mc.biome.taiga":"en snöig taiga eller istaggar",
+      "mc.biome.ocean":"ett hav – bygg på öar, det finns knappt något land",
+      "mc.biome.desert":"en ödemark eller öken",
+      "mc.biome.plains":"en slätt eller skog",
+      "teach.ice":"Isen sprider sig, och vit is kastar solljuset rakt ut igen – så det blir kallare, så det blir mer is. När det här väl har börjat är det väldigt svårt att stoppa.",
+      "teach.vap":"Varma hav trycker upp vattenånga i luften, och vattenånga fångar värme, vilket värmer haven ännu mer. Det var så Venus blev som den är.",
+      "teach.therm":"Regnet vittrar ner stenen och drar kol ur himlen. En blöt värld knuffar långsamt tillbaka sin egen temperatur – det är därför jorden håller sig stabil.",
+      "teach.volc":"Under all den isen är det inget som vittrar ner stenen, så vulkanerna bygger långsamt upp luften igen. Vänta tillräckligt länge så kan en frusen värld tina upp sig själv.",
+      "teach.sun":"Solen blir långsamt ljusare, precis som riktiga stjärnor gör när de åldras. Får den hållas tillräckligt länge räcker det ensamt för att koka den här platsen.",
+      "teach.field":"Inget här skapar ett magnetfält – för lätt, eller snurrar för långsamt – så solvinden skalar bort luften. Det är precis så Mars förlorade sin."
+    },
+    zh: {
+      "_wan":true,
+      "tagline":"抓一个世界，打破规则，快进十亿年，看看你造出了什么。",
+      "btn.back":"⬅ 启动器",
+      "aria.worlds":"起始世界",
+      "aria.canvas":"你正在摆弄的世界的图像",
+      "aria.zoomIn":"放大", "aria.zoomOut":"缩小",
+      "btn.startAgain":"重新开始",
+      "lbl.name":"这个世界的名字",
+      "r.life":"生物", "r.pop":"活着的人", "r.grav":"重力", "r.temp":"地表",
+      "r.air":"空气", "r.water":"水", "r.day":"一天", "r.year":"一年",
+      "r.lifeGone":"全没了", "r.lifeNoneYet":"还没有", "r.popGone":"全没了", "r.popNoneYet":"还没有",
+      "h.facts":"如果你站在那里", "h.journal":"发生了什么", "h.build":"打造世界",
+      "k.size":"大小", "k.dens":"岩石有多重", "k.dist":"离太阳的距离",
+      "k.air":"空气", "k.water":"水", "k.spin":"自转",
+      "v.almostNone":"几乎没有", "v.boneDry":"干透了",
+      "h.moon":"月亮和光环",
+      "btn.moonAdd":"加一个月亮", "btn.moonRemove":"移走月亮",
+      "btn.ringsAdd":"加上光环", "btn.ringsRemove":"移走光环",
+      "k.msize":"月亮大小", "k.mdist":"月亮有多远",
+      "hint.moon":"留意月亮的影子滑过行星。",
+      "h.wild":"来点疯狂的",
+      "btn.shrink":"缩小10倍", "btn.grow":"放大10倍", "btn.crush":"使劲挤压", "btn.rock":"扔一颗小行星",
+      "btn.freeze":"大冰冻", "btn.bake":"推向太阳", "btn.smash":"拿另一颗行星撞它",
+      "btn.random":"随机生成一个新世界", "btn.restart":"重启这个世界",
+      "h.picker":"选一个东西扔过去", "btn.cancel":"算了",
+      "h.speed":"加快时间",
+      "hint.speed":"按空格键暂停或继续。时间停止时什么都不会演化。",
+      "h.trophies":"奖杯",
+      "footer":"这是玩具，不是教科书——数字够有趣，但还没准到能交给NASA。",
+      "speed.0.label":"已暂停", "speed.0.top":"停", "speed.0.bot":"",
+      "speed.1.label":"每秒1年", "speed.1.top":"1", "speed.1.bot":"年/秒",
+      "speed.2.label":"每秒一千年", "speed.2.top":"千", "speed.2.bot":"年/秒",
+      "speed.3.label":"每秒一百万年", "speed.3.top":"百万", "speed.3.bot":"年/秒",
+      "speed.4.label":"每秒十亿年", "speed.4.top":"十亿", "speed.4.bot":"年/秒",
+      "preset.Earth":"地球", "preset.Mars":"火星", "preset.Venus":"金星", "preset.Mercury":"水星",
+      "preset.Moon":"月球", "preset.Jupiter":"木星", "preset.Saturn":"土星", "preset.Titan":"土卫六",
+      "preset.Pluto":"冥王星", "preset.Ocean world":"海洋世界", "preset.Rogue planet":"流浪行星",
+      "preset.A star":"一颗恒星", "preset.Black hole":"黑洞",
+      "throw.rand":"随机岩石", "throw.moon":"月球", "throw.mercury":"水星", "throw.mars":"火星",
+      "throw.titan":"土卫六", "throw.pluto":"冥王星", "throw.venus":"金星", "throw.earth2":"另一个地球",
+      "throw.jupiter":"木星", "throw.saturn":"土星", "throw.star":"一整颗恒星", "throw.hole":"一个黑洞",
+      "throw.surprise":"惊喜", "throw.swallows":"把你吞掉", "throw.xEarth":"{n}× 地球",
+      "water.none":"无", "water.ice":"全部冻住", "water.liquid":"海洋", "water.steam":"蒸汽", "water.vapour":"正在逃逸",
+      "u.AU":"AU", "u.h":"小时", "u.min":"分钟", "u.days":"天", "u.d":"天", "u.yr":"年", "u.bar":"巴", "u.pNone":"无",
+      "u.kg":"公斤", "u.cm":"厘米", "u.m":"米",
+      "n.years0":"0年", "n.years":"{n}年", "n.wanYears":"{n}万年", "n.yiYears":"{n}亿年",
+      "n.wan":"{n}万", "n.yi":"{n}亿", "n.wanyi":"{n}万亿",
+      "_big":[[1e20,"{n}万亿亿"],[1e16,"{n}亿亿"],[1e12,"{n}万亿"],[1e8,"{n}亿"],[1e4,"{n}万"]],
+      "f.hole.0":"早在你落地之前，你就会被拉成一根原子细线。",
+      "f.hole.1":"这里没有表面，没有地方可以站。",
+      "f.hole.2":"这里的重力大到没有哪个数字能说清楚。",
+      "f.hole.3":"连光都逃不出来告诉你发生了什么。",
+      "f.star.0":"你还没到就已经化成蒸气了。",
+      "f.star.1":"表面温度是 <b>{temp}</b>——任何固体都无法存在。",
+      "f.star.2":"它不是一个地方，而是一团世界那么大的火。",
+      "f.star.3":"站在安全距离外，它能让一颗行星温暖几十亿年。",
+      "f.weigh":"如果你在地球上重 40 公斤，在这里你会重 <b>{w}</b>。",
+      "f.almostNothing":"几乎为零",
+      "f.jumpNever":"普通跳一下，你就再也落不回来了。",
+      "f.jump":"普通跳一下能让你离地 <b>{h}</b>。",
+      "f.gas":"根本没有地面——只有越来越浓的气体，直到把你压碎。",
+      "f.noAir":"这里没有空气。光是站在那里就得穿全套宇航服。",
+      "f.thinAir":"空气太稀薄没法呼吸。你的血会沸腾。",
+      "f.heavyAir":"空气重得像深水一样压在你身上。",
+      "f.tempFirst":"你能吸一口气，但温度会先要了你的命。",
+      "f.breathe":"你真的可以站在这里呼吸。",
+      "f.c0":"冷到空气本身都会变成雪从天上落下来。",
+      "f.c1":"比南极最冷的冬天还冷得多。",
+      "f.c2":"冰冷刺骨。你需要一件超级厚的大衣。",
+      "f.c3":"说真的，是个舒服的好天气。",
+      "f.c4":"比地球上最热的沙漠还热。",
+      "f.c5":"热得像烤箱一样能把你烤熟。",
+      "f.c6":"热到能熔化铅。什么都站不住。",
+      "verdict.hole.p":"黑洞", "verdict.hole.h":"你把它挤没了。连光都出不来。",
+      "verdict.star.p":"恒星", "verdict.star.h":"它重到烧起来了。现在它是一颗恒星。",
+      "verdict.gas.p":"气态巨行星", "verdict.gas.h":"一个巨大的气体球，风暴有大陆那么大。",
+      "verdict.wrecked.p":"撞毁", "verdict.wrecked.h":"整个表面都被撞熔了。给它点时间冷却。",
+      "verdict.wiped.p":"全灭", "verdict.wiped.h":"所有人都没了。没有人能看到这一切了。",
+      "verdict.civ.p":"文明", "verdict.civ.h":"夜晚那一面城市在发光。有人正回望着你。",
+      "verdict.living.p":"生命世界", "verdict.living.h":"下面有东西活着，而且正在扩散。",
+      "verdict.just.p":"刚刚好", "verdict.just.h":"温暖、湿润、能呼吸。生命可以在这里开始——给它点时间。",
+      "verdict.molten.p":"熔化", "verdict.molten.h":"地面在发光。岩石像水一样流动。",
+      "verdict.furnace.p":"熔炉", "verdict.furnace.h":"浓厚的空气锁住了每一点热量。热到能熔化铅。",
+      "verdict.cooker.p":"高压锅", "verdict.cooker.h":"浓厚的空气锁住热量，海洋都变成了蒸汽。",
+      "verdict.airless.p":"无空气", "verdict.airless.h":"完全没有空气。只有岩石、尘土和陨石坑。",
+      "verdict.freeze.p":"深度冰冻", "verdict.freeze.h":"从南极冻到北极。连空气都想变成雪落下来。",
+      "verdict.crushing.p":"重力压顶", "verdict.crushing.h":"重力强到你站都站不起来，更别说跳了。",
+      "verdict.empty.p":"空荡", "verdict.empty.h":"现在安静了。这里曾经有过生命。",
+      "verdict.barren.p":"荒芜", "verdict.barren.h":"下面还没发生什么。",
+      "trophy.tiny.name":"口袋世界", "trophy.tiny.how":"把行星缩小十倍",
+      "trophy.giant.name":"巨无霸", "trophy.giant.how":"把世界放大到地球的十倍",
+      "trophy.star.name":"要有光", "trophy.star.how":"让世界重到烧起来",
+      "trophy.hole.name":"有去无回", "trophy.hole.how":"把世界挤成黑洞",
+      "trophy.snowball.name":"雪球", "trophy.snowball.how":"把世界从南极到北极冻透",
+      "trophy.furnace.name":"滚烫岩石", "trophy.furnace.how":"让地表超过 500 °C",
+      "trophy.spark.name":"生命火花", "trophy.spark.how":"看着生命在死寂的世界上诞生",
+      "trophy.crowded.name":"挤得满满", "trophy.crowded.how":"让一千亿人同时活着",
+      "trophy.ancient.name":"长久之路", "trophy.ancient.how":"让人类存活十亿年",
+      "trophy.moonlit.name":"月影", "trophy.moonlit.how":"抓住落在行星上的月影",
+      "trophy.rings.name":"光环大师", "trophy.rings.how":"给世界加上光环",
+      "trophy.smash.name":"大拆除", "trophy.smash.how":"用另一颗行星撞你的世界",
+      "trophy.escape.name":"逃生计划", "trophy.escape.how":"逼他们造出火箭",
+      "trophy.ocean.name":"水世界", "trophy.ocean.how":"把一个有生命的世界淹进海里",
+      "trophy.namer.name":"归我了", "trophy.namer.how":"给世界起一个你自己的名字",
+      "trophy.grand.name":"环游之旅", "trophy.grand.how":"访问每一个起始世界",
+      "log.trophy":"奖杯：{name}——{how}。",
+      "stage.0":"水里出现了微小的生命。",
+      "stage.1":"绿色的黏液正在浅海里蔓延。",
+      "stage.2":"奇怪的软体生物在四处游动。",
+      "stage.3":"植物和动物爬上了陆地。",
+      "stage.4":"聪明的动物出现了。它们会用工具，还互相大喊大叫。",
+      "stage.5":"城市出现了。夜晚那一面亮起灯光。他们正抬头看你。",
+      "pop.0":"下面有一百万人活着。",
+      "pop.1":"十亿人。他们现在到处都是。",
+      "pop.2":"一百亿人。这颗行星开始拥挤了。",
+      "pop.3":"一千亿人。这个世界挤满了。",
+      "pop.4":"一万亿人。从来没有过这样的事。",
+      "alien.0":"地表传来无线电信号：“喂？外面有人吗？”",
+      "alien.1":"他们造了望远镜。正直直地回望着你。",
+      "alien.2":"他们把探测器送过了月亮，庆祝了整整一个星期。",
+      "alien.3":"他们在争论为什么天空总在变。",
+      "alien.4":"他们画了一张全天星图，把自己放在了正中间。",
+      "alien.5":"他们把音乐发向太空，万一有人在听呢。",
+      "alien.6":"他们觉得有个巨大的东西在看着他们。他们说对了。",
+      "panic.0":"地表发来消息：“我们的天空不对劲。”",
+      "panic.1":"“海洋正在消失。如果有人在听，求求你。”",
+      "panic.2":"“我们不知道是什么在这样对我们。”",
+      "panic.3":"“请停下来。”",
+      "log.rockets":"他们正在拼命造火箭。",
+      "log.people":"聪明的动物变成了人。他们有几百万。",
+      "log.lastPeople":"最后的人也没了。",
+      "log.everyoneGone":"上面的所有人都没了。",
+      "log.airGone":"空气飘散到太空里了。现在它只是块光秃秃的岩石。",
+      "log.waterGone":"最后一点水也烧干了。",
+      "log.allDied":"一切都死了。世界安静了。",
+      "log.ev.asteroid":"一颗小行星撞了进来，把尘土抛满天空。",
+      "log.ev.bigDied":"大多数大型生物没能活下来。",
+      "log.ev.fraction":"只有一小部分人挺了过来。",
+      "log.ev.volcano":"火山到处喷发，往天空里咳出了更多空气。",
+      "log.ev.flare":"太阳耀斑爆发了。天空亮了一百年。",
+      "log.ev.comets":"一群冰彗星砸了下来，化成了水。",
+      "log.eclipse":"月亮的影子正滑过行星。",
+      "log.escaped":"有几枚火箭离开了行星。那些人逃掉了。",
+      "log.introStar":"载入了一颗小恒星。试试把它变小。",
+      "log.introHole":"载入了一个黑洞。什么都逃不出来。",
+      "log.loaded":"载入了{name}。",
+      "log.boot":"地球，就是现在这个样子。来吧，改点什么。",
+      "log.restart":"回到起点。试试别的。",
+      "log.random":"凭空随机造出了一个全新的世界。",
+      "log.incomingRand":"有个大家伙正飞快地冲过来。",
+      "log.incoming":"{name}正飞快地冲过来。",
+      "log.smash.swallowed":"它把你的世界整个吞了。什么都不剩了。",
+      "log.smash.star":"你的世界消失在它里面了。剩下的是一颗恒星。",
+      "log.smash.lost":"你的世界基本上输了。现在它大部分是{name}。",
+      "log.smash.otherOne":"另一颗",
+      "log.smash.direct":"正面撞击。整个表面熔化了，大陆全没了。",
+      "log.smash.solid":"结结实实撞上了。新的陨石坑、新的海岸线，而且热得发烫。",
+      "log.smash.nobody":"没人活下来。",
+      "log.smash.allDead":"所有活着的东西都没了。",
+      "log.smash.moon":"溅出去的一部分飞进轨道，聚成了一个月亮。",
+      "log.moonAdd":"拉了一个月亮绕着它转。",
+      "log.moonRemove":"把月亮拿走了。",
+      "log.ringsAdd":"给它围上了一圈冰和尘土。",
+      "log.ringsRemove":"把光环扫掉了。",
+      "log.shrink":"把它缩到了十分之一。",
+      "log.grow":"把它撑大了十倍。",
+      "log.crushHole":"挤过头了。它塌缩成了黑洞。",
+      "log.crushBall":"把它挤成了一个小球。重量不变，地方小多了。",
+      "log.rock":"你朝它扔了一颗巨大的小行星。新的陨石坑，新的海岸线。",
+      "log.rockDied":"大多数大型动物都被灭掉了。",
+      "log.freeze":"把它推远了。一切都在结冰。",
+      "log.bake":"把它推向太阳了。开始变热了。",
+      "trophy.boots.name":"脚踏实地", "trophy.boots.how":"降落到一个世界上并四处走走",
+      "landhint":"点击行星上的任意位置就能降落到那里",
+      "fp.back":"← 回到太空",
+      "aria.fpLeft":"向左转", "aria.fpFwd":"向前走", "aria.fpRight":"向右转", "aria.fpJump":"跳",
+      "fp.jumpBtn":"跳",
+      "fp.info":"{name} · {temp} · {g} g · 跳 {jump} 格",
+      "fp.thisWorld":"这个世界", "fp.it":"它",
+      "fp.noGas":"气态巨行星没有地面。没有地方可以降落。",
+      "fp.noStar":"你不能站在恒星上。",
+      "fp.noHole":"没有什么能站在黑洞上。",
+      "fp.wet":"你落在了海中央。下次瞄准绿色或棕色的地方。",
+      "fp.landed":"你下去了，降落在{name}上。",
+      "fp.groundGone":"地面从你脚下消失了。",
+      "mc.title":"去 Minecraft 里看看 →",
+      "mc.sub":"把你的行星变成可以粘贴的指令",
+      "mc.hint":"点击一行就能复制，然后粘贴到 Minecraft 聊天框里。聊天框一次只能贴一条。",
+      "mc.copyAll":"复制全部指令", "mc.copiedAll":"全部复制好了！", "mc.copyFail":"请逐行点击复制",
+      "mc.note":"需要开启作弊，Java 版 1.21.2+。在 1.20.5–1.21.1 上请改写成 <code>minecraft:generic.gravity</code>。",
+      "mc.copy":"复制", "mc.copied":"已复制", "mc.select":"请手动选择",
+      "mc.ariaCopy":"复制：{cmd}",
+      "mc.sw.sky":"天空", "mc.sw.fog":"雾", "mc.sw.grass":"草", "mc.sw.water":"水",
+      "mc.feel":"在<b>{name}</b>上，你一跳{jump}，摔下<b>{fall}</b>才会受伤。你的整个世界有<b>{border} 格</b>宽。最适合建造的地方：{biome}。",
+      "mc.jumpOff":"会<b>直接飞出地图</b>",
+      "mc.jumpHigh":"能跳<b>{n} 格</b>高",
+      "mc.blocks":"{n} 格",
+      "mc.thisWorld":"这个世界",
+      "mc.biome.hole":"哪儿都不行。这个上面没法站",
+      "mc.biome.star":"下界，而且连下界都还太凉",
+      "mc.biome.gas":"没有任何固体可以建造——你得用漂浮平台",
+      "mc.biome.end":"末地——黑色的天空，没有天气，就像一个没有空气的世界",
+      "mc.biome.nether":"下界，或者玄武岩三角洲",
+      "mc.biome.taiga":"积雪的针叶林或冰刺之地",
+      "mc.biome.ocean":"海洋——在岛上建吧，几乎没有陆地",
+      "mc.biome.desert":"恶地或沙漠",
+      "mc.biome.plains":"平原或森林",
+      "teach.ice":"冰在扩散，而白色的冰会把阳光直接反射回去——于是更冷，于是更多冰。这一旦开始就很难停下来。",
+      "teach.vap":"温暖的海洋把水蒸气推进空气，而水蒸气会锁住热量，让海洋更暖。金星就是这样变成今天这个样子的。",
+      "teach.therm":"雨水在风化岩石，把碳从天空中拉下来。一个湿润的世界会慢慢把自己的温度调回来——这就是地球能保持稳定的原因。",
+      "teach.volc":"在那么厚的冰下面没有什么在风化岩石，所以火山正在慢慢把空气重新堆起来。等得够久，一个冰冻的世界能自己解冻。",
+      "teach.sun":"太阳正在慢慢变亮，真正的恒星随着年龄增长都是这样。放着不管够久，光这一点就足以把这里烤熟。",
+      "teach.field":"这里没有东西能产生磁场——太轻，或者转得太慢——所以太阳风正在把空气一层层剥走。火星就是这样失去大气的。"
+    }
+  };
+  let LANG = "sv";
+  function detectLang(){
+    let l = null;
+    try { l = localStorage.getItem("lang"); } catch(e){}
+    if (l==="sv"||l==="en"||l==="zh") return l;
+    const nl = String(navigator.language||navigator.userLanguage||"").toLowerCase();
+    if (nl.indexOf("zh")===0) return "zh";
+    if (nl.indexOf("en")===0) return "en";
+    return "sv";
+  }
+  LANG = detectLang();
+  function tr(key, p){
+    const d = L10N[LANG];
+    const s = (d && d[key]!==undefined) ? d[key] : (L10N.en[key]!==undefined ? L10N.en[key] : key);
+    if (!p) return s;
+    return s.replace(/\{(\w+)\}/g, (m,k)=>{
+      let v = p[k];
+      if (v===undefined || v===null) return m;
+      if (typeof v==="object" && v.t){ const w = tr(v.t); v = v.lc ? w.charAt(0).toLowerCase()+w.slice(1) : w; }
+      return String(v);
+    });
+  }
+  /* singular variant ("key1") when the number is exactly one and the language has one */
+  function trN(key, n){
+    const d = L10N[LANG];
+    if (parseFloat(n)===1 && d && d[key+"1"]!==undefined) return tr(key+"1",{n:n});
+    return tr(key,{n:n});
+  }
+  function setLang(l){
+    if (!L10N[l]) return;
+    LANG = l;
+    try { localStorage.setItem("lang", l); } catch(e){}
+    applyLang();
+  }
+  /* is this text one of the starting worlds' names, in any language? -> its English key */
+  function presetKeyOf(n){
+    n = String(n||"").trim();
+    if (!n) return null;
+    if (PRESETS[n]) return n;
+    for (const l of Object.keys(L10N))
+      for (const k of Object.keys(PRESETS))
+        if (L10N[l]["preset."+k]===n) return k;
+    return null;
+  }
+
+  const SPEEDS = [
+    {y:0,   label:"paused",                    top:"STOP", bot:""},
+    {y:1,   label:"1 year a second",           top:"1",    bot:"year/s"},
+    {y:1e3, label:"a thousand years a second", top:"1K",   bot:"year/s"},
+    {y:1e6, label:"a million years a second",  top:"1M",   bot:"year/s"},
+    {y:1e9, label:"a billion years a second",  top:"1B",   bot:"year/s"}
+  ];
+
+  const PRESETS = {
+    Earth:   {size:1,    dens:1,    dist:1,    air:1,     water:1,    spin:1,    seed:7,  moon:true, msize:0.27, mdist:6},
+    Mars:    {size:0.53, dens:0.71, dist:1.52, air:0.006, water:0.02, spin:0.97, seed:12},
+    Venus:   {size:0.95, dens:0.95, dist:0.72, air:55,    water:0,    spin:0.004,seed:21},
+    Mercury: {size:0.38, dens:0.98, dist:0.39, air:0.002, water:0,    spin:0.017,seed:101},
+    Moon:    {size:0.27, dens:0.61, dist:1,    air:0.002, water:0,    spin:0.034,seed:33},
+    Jupiter: {size:11.2, dens:0.24, dist:5.2,  air:45,    water:0.3,  spin:2.4,  seed:44, rings:true, moon:true, msize:0.10, mdist:9},
+    Saturn:  {size:9.45, dens:0.125,dist:9.5,  air:40,    water:0.2,  spin:2.2,  seed:102,rings:true, moon:true, msize:0.07, mdist:11},
+    Titan:   {size:0.40, dens:0.34, dist:9.5,  air:1.45,  water:0.6,  spin:0.06, seed:103},
+    Pluto:   {size:0.19, dens:0.34, dist:39,   air:0.002, water:0.5,  spin:0.16, seed:55},
+    "Ocean world":{size:1.4,dens:0.95,dist:1.05,air:1.6,  water:12,   spin:1.3,  seed:104,moon:true, msize:0.18, mdist:7},
+    "Rogue planet":{size:1.1,dens:1, dist:40,  air:3,     water:2,    spin:0.5,  seed:105},
+    "A star":{size:60,   dens:3,    dist:20,   air:1,     water:0,    spin:1,    seed:66},
+    "Black hole":{size:1,dens:1,    dist:1,    air:0.002, water:0,    spin:1,    seed:88, crush:9e26}
+  };
+
+  const state = {
+    size:1, dens:1, dist:1, air:1, water:1, spin:1, crush:1, heat:0,
+    years:0, bio:0, unfit:0, stage:-1, everLived:false,
+    pop:0, hadPeople:false, mourned:true, popMark:0, life:0,
+    iceFrac:0.06, vapour:0, tIce:false, tVap:false, tTherm:false, tSun:false, tField:false, tVolc:false,
+    moonOn:false, moonSize:0.27, moonDist:6, ringsOn:false,
+    speed:1, seed:7, preset:"Earth", peaceYears:0,
+    name:"Earth", zoom:1, chatter:0, chatIdx:0, panicIdx:0, distress:false, rocketsGone:false
+  };
+  let log = [], snapshot = null;
+  let rot = 0, cloudRot = 0, moonAng = 0.9, satAng = 0, tPrev = 0;
+  const fx = {inbound:null, flash:0, debris:0, eclipse:false, rockets:null, rocketsDone:false};
+
+  /* ================= the world model ================= */
+  /* how much sunlight bounces straight back off — ice and cloud send it away */
+  function albedoNow(){
+    if (state.size>4 && state.dens<0.7) return 0.50;
+    if (state.air>10) return 0.62;
+    if (state.water>0.05) return clamp(0.26+0.42*state.iceFrac,0.14,0.70);
+    if (state.air>1) return 0.30;
+    return state.dens<0.68 ? 0.12 : 0.22;
+  }
+  function derive(){
+    const shrink = Math.cbrt(state.crush);
+    const R = state.size/shrink;
+    const M = state.dens*state.size*state.size*state.size;
+    const g = M/(R*R);
+    const vesc = 11.2*Math.sqrt(M/R);
+    const blackHole = M >= 7.18e8*R;
+    const star = !blackHole && M >= 26000;
+    const gas = !star && !blackHole && state.size > 4 && state.dens < 0.7;
+
+    const A = albedoNow();
+    const lum = 1 + Math.min(state.years,1.2e10)*1e-10;      // the sun brightens as it ages
+    const Teq = 278.6*Math.pow(Math.max(0.06,1-A),0.25)*Math.pow(lum,0.25)/Math.sqrt(state.dist);
+    let T;
+    if (star)     T = 3200 + Math.min(3000, M/250);
+    else if (gas) T = Teq + 40 + state.heat;
+    else          T = Teq + (state.air > 0.004 ? 33*Math.pow(state.air,0.68) : 0)
+                          + state.vapour*92 + state.heat;
+
+    const P = state.air*g;
+    const Tboil = 373 + 30*Math.log(Math.max(P,0.006));
+    const ret = vesc/Math.sqrt(Math.max(T,20)/100);
+    const leak = clamp((5.6-ret)/5.6,0,1);
+
+    let water = "none";
+    if (state.water > 0.02){
+      if (P < 0.01)       water = "vapour";
+      else if (T < 273)   water = "ice";
+      else if (T > Tboil) water = "steam";
+      else                water = "liquid";
+    }
+    const habitable = !star && !blackHole && !gas && water === "liquid" &&
+                      g > 0.12 && g < 4.5 && P > 0.05 && P < 40 && T > 248 && T < 342;
+    const field = M > 0.3 && state.spin > 0.05;      // a spinning molten core makes a shield
+    return {M,R,g,vesc,T,P,Tboil,leak,water,habitable,star,blackHole,gas,field,A,
+            dens: state.dens*state.crush, ret};
+  }
+
+  const STAGES = [
+    {at:2e6,   msg:"stage.0", cls:"good"},
+    {at:6e8,   msg:"stage.1", cls:"good"},
+    {at:1.6e9, msg:"stage.2", cls:"good"},
+    {at:2.6e9, msg:"stage.3", cls:"good"},
+    {at:3.6e9, msg:"stage.4", cls:"good"},
+    {at:4.3e9, msg:"stage.5", cls:"big good"}
+  ];
+
+  /* how many living things of every kind the world is carrying */
+  const LIFE_TARGET = [2e15, 4e17, 2e18, 8e18, 1.5e19, 2e19];
+  function lifeCapacity(d){
+    if (state.stage < 0 || !d.habitable) return 0;
+    const area = state.size*state.size;
+    const warm = Math.exp(-Math.pow((d.T-292)/55,2));
+    const wet  = clamp(Math.log(1+state.water*2)/Math.log(3), 0.15, 1.7);
+    return LIFE_TARGET[Math.min(state.stage,5)]*area*warm*wet;
+  }
+  function updateLife(d, dY){
+    const K = lifeCapacity(d);
+    if (state.stage >= 0 && state.life < 1 && K > 1) state.life = 1e11;
+    if (state.life > 0){
+      if (K > 1){
+        const ratio = K/state.life;
+        state.life = K/(1+(ratio-1)*Math.exp(-3e-6*dY));
+      } else {
+        state.life *= Math.exp(-dY/3e5);
+        if (state.life < 1) state.life = 0;
+      }
+    }
+  }
+
+  function capacity(d){
+    if (!d.habitable) return 0;
+    const land = clamp(1-seaLevel(), 0.02, 1)/0.42;
+    const area = state.size*state.size;
+    const warm = Math.exp(-Math.pow((d.T-290)/42,2));
+    const pull = Math.exp(-Math.pow((d.g-1)/1.7,2));
+    return 12e9*area*land*warm*pull;
+  }
+  const POP_MARKS = [
+    {at:1e6,  msg:"pop.0"},
+    {at:1e9,  msg:"pop.1"},
+    {at:1e10, msg:"pop.2"},
+    {at:1e11, msg:"pop.3"},
+    {at:1e12, msg:"pop.4"}
+  ];
+  /* the people down there have opinions */
+  const ALIEN = ["alien.0","alien.1","alien.2","alien.3","alien.4","alien.5","alien.6"];
+  const PANIC = ["panic.0","panic.1","panic.2","panic.3"];
+  function chatterCheck(d, dY){
+    if (state.stage < 5 || state.pop < 1) return;
+    state.chatter += dY;
+    if (state.distress){
+      if (state.chatter > 1e5 && state.panicIdx < PANIC.length){
+        state.chatter = 0;
+        say(PANIC[state.panicIdx],"bad");
+        state.panicIdx++;
+      }
+      if (!state.rocketsGone && state.pop > 1e6){
+        state.rocketsGone = true;
+        launchRockets();
+        say("log.rockets","big");
+      }
+    } else if (state.chatter > 1.2e8){
+      state.chatter = 0;
+      say(ALIEN[state.chatIdx % ALIEN.length],"good");
+      state.chatIdx++;
+    }
+  }
+
+  function updatePeople(d, dY){
+    const K = capacity(d);
+    if (state.stage >= 4 && d.habitable && state.pop < 1 && K > 1){
+      state.pop = 2e6; state.hadPeople = true; state.mourned = false; state.popMark = 0;
+      state.rocketsGone = false; state.chatter = 0;
+      say("log.people","big good");
+    }
+    state.distress = state.pop >= 1 && !d.habitable;
+    if (state.pop > 0){
+      chatterCheck(d, dY);
+      if (d.habitable && K > 1 && state.stage >= 4){
+        const ratio = K/state.pop;
+        state.pop = K/(1+(ratio-1)*Math.exp(-0.011*dY));
+        state.peaceYears += dY;
+      } else {
+        state.pop *= Math.exp(-dY/1.2e5);
+        state.peaceYears = 0;
+      }
+      while (state.popMark < POP_MARKS.length && state.pop >= POP_MARKS[state.popMark].at){
+        say(POP_MARKS[state.popMark].msg, "good"); state.popMark++;
+      }
+      if (state.pop < 1){
+        state.pop = 0; state.peaceYears = 0;
+        if (state.hadPeople && !state.mourned){ say("log.lastPeople","bad big"); state.mourned = true; }
+      }
+    }
+  }
+
+  function step(dY){
+    const d = derive();
+    if (state.heat > 0.01) state.heat *= Math.exp(-dY/4e4);
+    if (d.blackHole || d.star){
+      if (state.pop > 0 || state.stage >= 0 || state.life > 0){
+        state.pop = 0; state.stage = -1; state.bio = 0; state.peaceYears = 0; state.life = 0;
+        if (state.hadPeople && !state.mourned){ say("log.everyoneGone","bad big"); state.mourned = true; }
+      }
+      state.years += dY;
+      return;
+    }
+    /* --- the feedbacks that make a real climate --- */
+    {
+      const iceT = state.water>0.05 ? clamp((284-d.T)/38, 0.04, 1) : 0;
+      const b4 = state.iceFrac;
+      state.iceFrac += (iceT-state.iceFrac)*(1-Math.exp(-dY/2.2e4));
+      if (state.iceFrac>0.55 && b4<=0.55)
+        teach("tIce","teach.ice");
+
+      const vapT = ((d.water==="liquid"||d.water==="steam") && state.water>0.05) ? clamp((d.T-298)/42,0,1) : 0;
+      const b5 = state.vapour;
+      state.vapour += (vapT-state.vapour)*(1-Math.exp(-dY/6e3));
+      if (state.vapour>0.35 && b5<=0.35)
+        teach("tVap","teach.vap");
+
+      if (d.habitable && state.air>0.02 && state.air<25){
+        const dT = d.T-289;
+        if (Math.abs(dT)>2){
+          state.air = clamp(state.air*Math.exp(-dT*2.2e-9*dY),0.002,60);
+          if (Math.abs(dT)>8)
+            teach("tTherm","teach.therm");
+        }
+      } else if (state.iceFrac>0.8 && !gasStar(d) && state.air>0.002 && state.air<40){
+        /* under the ice nothing weathers, so volcanoes slowly rebuild the air */
+        state.air = clamp(state.air*Math.exp(2.1e-9*dY),0.002,60);
+        teach("tVolc","teach.volc");
+      }
+      if (state.years>4e8)
+        teach("tSun","teach.sun");
+    }
+
+    if (d.leak > 0 && state.air > 0.002){
+      const shield = d.field ? 1 : 3.4;                       // no magnetic field, no protection
+      const wind = clamp(1/(state.dist*state.dist),0.25,6);   // solar wind bites harder up close
+      const loss = d.leak*d.leak*2.2e-8*shield*wind;
+      const before = state.air;
+      state.air = Math.max(0.002, state.air*Math.exp(-loss*dY));
+      if (!d.field && state.air>0.05 && d.leak>0.15)
+        teach("tField","teach.field");
+      if (before > 0.05 && state.air <= 0.05) say("log.airGone","bad");
+      syncSliders();
+    }
+    if (d.water === "steam" || d.water === "vapour"){
+      const before = state.water;
+      state.water = Math.max(0, state.water*Math.exp(-3.5e-8*dY));
+      if (before > 0.05 && state.water <= 0.05) say("log.waterGone","bad");
+      syncSliders();
+    }
+    if (d.habitable){
+      state.unfit = 0;
+      state.bio += dY;
+      while (state.stage+1 < STAGES.length && state.bio >= STAGES[state.stage+1].at){
+        state.stage++; state.everLived = true;
+        say(STAGES[state.stage].msg, STAGES[state.stage].cls);
+        if (state.stage === 0) fxSpark = true;
+      }
+    } else if (state.bio > 0){
+      state.unfit += dY;
+      if (state.unfit > 1.2e7){
+        if (state.stage >= 0) say("log.allDied","bad big");
+        state.bio = 0; state.stage = -1; state.unfit = 0; state.life = 0;
+      }
+    }
+    updateLife(d, dY);
+    updatePeople(d, dY);
+    if (Math.random() < Math.min(0.012, 1-Math.exp(-dY/2.4e8))) randomEvent();
+    state.years += dY;
+  }
+  let fxSpark = false;
+
+  function randomEvent(){
+    const roll = Math.random();
+    if (roll < 0.34){
+      say("log.ev.asteroid");
+      if (state.stage >= 2 && Math.random() < 0.28){
+        state.bio = Math.max(0, state.bio-5e8); restage();
+        state.life *= 0.25;
+        say("log.ev.bigDied","bad");
+        if (state.pop > 1000){ state.pop *= 0.12; state.peaceYears = 0; say("log.ev.fraction","bad"); }
+      }
+    } else if (roll < 0.6){
+      state.air = Math.min(60, state.air*1.08+0.01); syncSliders();
+      say("log.ev.volcano");
+    } else if (roll < 0.8){
+      say("log.ev.flare");
+    } else {
+      state.water = Math.min(20, state.water+0.05); syncSliders();
+      say("log.ev.comets");
+    }
+  }
+  function gasStar(d){ return d.star||d.blackHole||d.gas; }
+  /* the climate lessons: each fires once per world, stored as a journal key so it follows the language */
+  function teach(flag, key){
+    if (state[flag]) return;
+    state[flag]=true;
+    say(key,"good");
+  }
+  function restage(){
+    state.stage = -1;
+    for (let i=STAGES.length-1;i>=0;i--) if (state.bio >= STAGES[i].at){state.stage=i;break;}
+  }
+
+  /* ================= words & numbers ================= */
+  function fmtYears(y){
+    if (y < 1) return tr("n.years0");
+    if (L10N[LANG]._wan){
+      if (y < 1e4) return tr("n.years",{n:Math.round(y).toLocaleString()});
+      if (y < 1e8) return tr("n.wanYears",{n:(y/1e4).toFixed(y<1e5?1:0)});
+      return tr("n.yiYears",{n:(y/1e8).toFixed(2)});
+    }
+    if (y < 1e3) return trN("n.years",Math.round(y).toLocaleString());
+    if (y < 1e6) return trN("n.kyears",(y/1e3).toFixed(y<1e4?1:0));
+    if (y < 1e9) return trN("n.myears",(y/1e6).toFixed(y<1e7?1:0));
+    return trN("n.byears",(y/1e9).toFixed(2));
+  }
+  function fmtTemp(T){
+    const c = T-273.15;
+    return (Math.abs(c) >= 1000 ? Math.round(c).toLocaleString() : c.toFixed(0))+" °C";
+  }
+  function fmtPressure(P){
+    if (P < 0.005) return tr("u.pNone");
+    if (P < 1) return P.toFixed(3).replace(/0+$/,"")+" "+tr("u.bar");
+    if (P > 999) return Math.round(P).toLocaleString()+" "+tr("u.bar");
+    return P.toFixed(P<10?2:0)+" "+tr("u.bar");
+  }
+  function fmtDay(spin){
+    const h = 24/spin;
+    if (h < 1) return (h*60).toFixed(0)+" "+tr("u.min");
+    if (h > 72) return (h/24).toFixed(0)+" "+tr("u.days");
+    return h.toFixed(h<10?1:0)+" "+tr("u.h");
+  }
+  function fmtYear(dist){
+    const y = Math.pow(dist,1.5);
+    return y < 1 ? (y*365).toFixed(0)+" "+tr("u.d") : y.toFixed(y<10?1:0)+" "+tr("u.yr");
+  }
+  function fmtPeople(p){
+    if (p < 1) return "0";
+    if (p < 1e4) return Math.round(p).toLocaleString();
+    if (L10N[LANG]._wan){
+      if (p < 1e8) return tr("n.wan",{n:(p/1e4).toFixed(p<1e6?1:0)});
+      if (p < 1e12) return tr("n.yi",{n:(p/1e8).toFixed(2)});
+      if (p < 1e16) return tr("n.wanyi",{n:(p/1e12).toFixed(2)});
+      return p.toExponential(2);
+    }
+    if (p < 1e6) return trN("n.thousand",(p/1e3).toFixed(0));
+    if (p < 1e9) return trN("n.million",(p/1e6).toFixed(p<1e8?1:0));
+    if (p < 1e12) return trN("n.billion",(p/1e9).toFixed(2));
+    if (p < 1e15) return trN("n.trillion",(p/1e12).toFixed(2));
+    return p.toExponential(2);
+  }
+  function fmtCount(n){
+    if (n < 1) return "0";
+    if (n < 1e4) return Math.round(n).toLocaleString();
+    const units = L10N[LANG]._big || L10N.en._big;
+    for (const u of units){
+      if (n >= u[0]){
+        const v=n/u[0], s=(v<10?v.toFixed(1):Math.round(v).toLocaleString());
+        const tpl = (parseFloat(s)===1 && u[2]) ? u[2] : u[1];
+        return tpl.replace("{n}", s);
+      }
+    }
+    return Math.round(n).toLocaleString();
+  }
+
+  /* what it would be like to stand on the thing you just built */
+  function facts(d){
+    if (d.blackHole) return [tr("f.hole.0"), tr("f.hole.1"), tr("f.hole.2"), tr("f.hole.3")];
+    if (d.star) return [tr("f.star.0"), tr("f.star.1",{temp:fmtTemp(d.T)}), tr("f.star.2"), tr("f.star.3")];
+    const out=[];
+    const kg = 40*d.g;
+    out.push(tr("f.weigh",{w: kg<0.05 ? tr("f.almostNothing")
+                            : (kg<10?kg.toFixed(1):Math.round(kg).toLocaleString())+" "+tr("u.kg")}));
+    const jump = 0.5/Math.max(d.g,0.0001);
+    out.push(jump>400 ? tr("f.jumpNever")
+           : tr("f.jump",{h: jump<1 ? Math.round(jump*100)+" "+tr("u.cm") : jump.toFixed(1)+" "+tr("u.m")}));
+    if (d.gas) out.push(tr("f.gas"));
+    else if (d.P<0.01) out.push(tr("f.noAir"));
+    else if (d.P<0.3) out.push(tr("f.thinAir"));
+    else if (d.P>8) out.push(tr("f.heavyAir"));
+    else if (d.T>320||d.T<255) out.push(tr("f.tempFirst"));
+    else out.push(tr("f.breathe"));
+    const c=d.T-273.15;
+    if (c<-180)      out.push(tr("f.c0"));
+    else if (c<-40)  out.push(tr("f.c1"));
+    else if (c<5)    out.push(tr("f.c2"));
+    else if (c<30)   out.push(tr("f.c3"));
+    else if (c<60)   out.push(tr("f.c4"));
+    else if (c<250)  out.push(tr("f.c5"));
+    else             out.push(tr("f.c6"));
+    return out;
+  }
+
+  const vd = (k,c) => ({p:tr("verdict."+k+".p"), c:c, h:tr("verdict."+k+".h")});
+  function verdict(d){
+    if (d.blackHole) return vd("hole","bad");
+    if (d.star)      return vd("star","warn");
+    if (d.gas)       return vd("gas","warn");
+    if (state.heat > 250) return vd("wrecked","bad");
+    if (state.hadPeople && state.pop < 1) return vd("wiped","bad");
+    if (state.stage >= 5 && state.pop >= 1) return vd("civ","good");
+    if (state.stage >= 0) return vd("living","good");
+    if (d.habitable)      return vd("just","good");
+    if (d.T > 900)        return vd("molten","bad");
+    if (d.T > 600 && d.P > 5) return vd("furnace","bad");
+    if (d.water === "steam" && d.P > 10) return vd("cooker","bad");
+    if (d.P < 0.01)  return vd("airless","warn");
+    if (d.T < 190)   return vd("freeze","warn");
+    if (d.g > 4)     return vd("crushing","warn");
+    if (state.everLived) return vd("empty","warn");
+    return vd("barren","warn");
+  }
+
+  /* journal lines are stored as {key, params} so they re-render in whichever language is picked */
+  function say(key, cls, params){
+    log.unshift({y:state.years, key:key, params:params||null, cls:cls||""});
+    if (log.length > 40) log.pop();
+    renderLog();
+  }
+  function renderLog(){
+    const ol = $("log"); ol.textContent = "";
+    for (const e of log){
+      const li = document.createElement("li"); li.className = e.cls||"";
+      const a = document.createElement("span"); a.className="when";
+      a.textContent = (typeof e.y==="number") ? fmtYears(e.y) : (e.when||"");
+      const b = document.createElement("span"); b.className="what";
+      b.textContent = e.key ? tr(e.key, e.params||undefined) : (e.what||"");
+      li.append(a,b); ol.append(li);
+    }
+  }
+
+  /* ================= take it to Minecraft ================= */
+  function mcColors(d, look){
+    let sky,fog,grass,water;
+    switch(look.kind){
+      case "ice":  sky="#9AC6FF"; fog="#DCEBFF"; grass="#A7C7D6"; water="#2E6E96"; break;
+      case "dust": sky="#E8A878"; fog="#F0C49A"; grass="#9C7A4E"; water="#7A5A3A"; break;
+      case "moon": sky="#05050C"; fog="#12121C"; grass="#8A867E"; water="#2A2A32"; break;
+      case "lava": sky="#3B1208"; fog="#7A2408"; grass="#6B3A22"; water="#FF5A1E"; break;
+      case "gas":  sky="#E4CC9E"; fog="#EFE0C2"; grass="#C8A87A"; water="#B98A5E"; break;
+      case "star": sky="#FFD48A"; fog="#FFB454"; grass="#FF9A3C"; water="#FF7A24"; break;
+      case "hole": sky="#000000"; fog="#050509"; grass="#1A1820"; water="#0A0A12"; break;
+      default:     sky="#78A7FF"; fog="#C0D8FF"; grass="#79C05A"; water="#3F76E4";
+    }
+    if (look.kind!=="hole" && look.kind!=="star" && look.kind!=="gas"){
+      if (d.P < 0.05){ sky="#05050C"; fog="#0E0E18"; }
+      else if (d.T > 600){ sky="#C97C32"; fog="#E8A050"; }
+    }
+    return {sky,fog,grass,water};
+  }
+  function mcBiome(d, look){
+    if (look.kind==="hole") return tr("mc.biome.hole");
+    if (look.kind==="star") return tr("mc.biome.star");
+    if (look.kind==="gas") return tr("mc.biome.gas");
+    if (d.P < 0.05) return tr("mc.biome.end");
+    if (d.T > 500) return tr("mc.biome.nether");
+    if (d.T < 250) return tr("mc.biome.taiga");
+    if (state.water > 4) return tr("mc.biome.ocean");
+    if (state.water < 0.2) return tr("mc.biome.desert");
+    return tr("mc.biome.plains");
+  }
+  const escHTML = s => String(s).replace(/[&<>"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
+  function mcBuild(d, look){
+    const g = clamp(d.g, 0.0008, 400);
+    const grav = clamp(0.08*g, 0.0001, 1);
+    const safe = clamp(Math.round(3/g), 1, 100);
+    const fallMul = clamp(g, 0, 100);
+    const jump = 1.25/g;
+    const border = clamp(Math.round(3000*state.size), 32, 59999968);
+    const c = [];
+    c.push("/attribute @s minecraft:gravity base set "+grav.toFixed(4));
+    c.push("/attribute @s minecraft:safe_fall_distance base set "+safe);
+    c.push("/attribute @s minecraft:fall_damage_multiplier base set "+fallMul.toFixed(2));
+    c.push("/worldborder set "+border);
+    c.push(state.spin < 0.12 ? "/gamerule doDaylightCycle false" : "/gamerule doDaylightCycle true");
+    c.push((d.water==="liquid" && state.air>0.3) ? "/weather rain" : "/weather clear");
+    if (d.T > 500) c.push("/effect give @s minecraft:fire_resistance infinite 0 true");
+    if (d.P < 0.3)      c.push("/effect give @s minecraft:slowness infinite 0 true");
+    else if (d.P > 8)   c.push("/effect give @s minecraft:slowness infinite 1 true");
+    if (d.g > 2.5)      c.push("/effect give @s minecraft:mining_fatigue infinite 0 true");
+    else if (d.g < 0.4) c.push("/effect give @s minecraft:jump_boost infinite 0 true");
+
+    const jumpTxt = jump>400 ? tr("mc.jumpOff")
+                  : jump>20  ? tr("mc.jumpHigh",{n:Math.round(jump)})
+                  : tr("mc.jumpHigh",{n:jump.toFixed(1)});
+    const feel = tr("mc.feel",{name: state.name ? escHTML(state.name) : tr("mc.thisWorld"),
+                               jump: jumpTxt, fall: trN("mc.blocks", safe),
+                               border: border.toLocaleString(), biome: mcBiome(d,look)});
+    return {cmds:c.join("\n"), feel, colors:mcColors(d,look)};
+  }
+  let mcCache="", mcText="";
+  function copyText(txt, ok, fail){
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(txt).then(ok, fail); return;
+      }
+    } catch(e){}
+    fail();
+  }
+  function refreshMinecraft(d, look){
+    if (!$("mcbox").open) return;
+    const b = mcBuild(d, look);
+    if (b.cmds === mcCache) return;
+    mcCache = b.cmds; mcText = b.cmds;
+    $("mcfeel").innerHTML = b.feel;
+    const list = $("mccmds"); list.textContent="";
+    for (const line of b.cmds.split("\n")){
+      const row=document.createElement("button");
+      row.className="mcline"; row.type="button";
+      row.setAttribute("aria-label",tr("mc.ariaCopy",{cmd:line}));
+      const c=document.createElement("span"); c.className="cmd"; c.textContent=line;
+      const t=document.createElement("span"); t.className="cp"; t.textContent=tr("mc.copy");
+      row.append(c,t);
+      row.addEventListener("click",()=>{
+        const mark=okd=>{ t.textContent = okd?tr("mc.copied"):tr("mc.select"); row.classList.toggle("done",!!okd);
+                          setTimeout(()=>{ t.textContent=tr("mc.copy"); row.classList.remove("done"); },1800); };
+        copyText(line, ()=>mark(true), ()=>{
+          try {
+            const r=document.createRange(); r.selectNodeContents(c);
+            const s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+            mark(document.execCommand && document.execCommand("copy"));
+          } catch(e){ mark(false); }
+        });
+      });
+      list.append(row);
+    }
+    const box = $("mcswatches"); box.textContent="";
+    for (const k of ["sky","fog","grass","water"]){
+      const s=document.createElement("span"); s.className="sw";
+      const i=document.createElement("i"); i.style.background=b.colors[k];
+      const t=document.createElement("span"); t.textContent=tr("mc.sw."+k)+" "+b.colors[k].toUpperCase();
+      s.append(i,t); box.append(s);
+    }
+  }
+
+  /* ================= trophies ================= */
+  const TROPHIES = [
+    {id:"tiny",    name:"Pocket World",      how:"Shrink a planet ten times smaller"},
+    {id:"giant",   name:"Absolute Unit",     how:"Grow a world to ten times Earth"},
+    {id:"star",    name:"Let There Be Light",how:"Make a world heavy enough to catch fire"},
+    {id:"hole",    name:"Point of No Return",how:"Squeeze a world into a black hole"},
+    {id:"snowball",name:"Snowball",          how:"Freeze a world solid from pole to pole"},
+    {id:"furnace", name:"Hot Rock",          how:"Get the surface above 500 °C"},
+    {id:"spark",   name:"Spark of Life",     how:"Watch life begin on a dead world"},
+    {id:"crowded", name:"Standing Room Only",how:"Have 100 billion people alive at once"},
+    {id:"ancient", name:"The Long Haul",     how:"Keep people alive for a billion years"},
+    {id:"moonlit", name:"Moonstruck",        how:"Catch the moon's shadow on the planet"},
+    {id:"rings",   name:"Ringmaster",        how:"Put rings around a world"},
+    {id:"smash",   name:"Demolition",        how:"Smash another planet into yours"},
+    {id:"escape",  name:"Escape Plan",       how:"Push them until they build rockets"},
+    {id:"ocean",   name:"Water World",       how:"Drown a living world in ocean"},
+    {id:"namer",   name:"Mine Now",          how:"Give a world a name of your own"},
+    {id:"grand",   name:"Grand Tour",        how:"Visit every starting world"},
+    {id:"boots",   name:"Boots on the Ground",how:"Land on a world and walk around on it"}
+  ];
+  let won = {}, visited = {};
+  try { won = JSON.parse(localStorage.getItem("planet-tinkerer-trophies")||"{}")||{}; } catch(e){ won = {}; }
+  try { visited = JSON.parse(localStorage.getItem("planet-tinkerer-visited")||"{}")||{}; } catch(e){ visited = {}; }
+
+  function award(id){
+    if (won[id]) return;
+    const t = TROPHIES.find(x=>x.id===id); if (!t) return;
+    won[id] = true;
+    try { localStorage.setItem("planet-tinkerer-trophies", JSON.stringify(won)); } catch(e){}
+    say("log.trophy","gold big",{name:{t:"trophy."+id+".name"}, how:{t:"trophy."+id+".how", lc:true}});
+    renderTrophies(); showToast(t);
+  }
+  let toastTimer = 0;
+  function showToast(t){
+    $("toastName").textContent = tr("trophy."+t.id+".name");
+    $("toastHow").textContent = tr("trophy."+t.id+".how");
+    $("toast").classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>$("toast").classList.remove("show"), 3600);
+  }
+  function renderTrophies(){
+    const ul = $("tlist"); ul.textContent = "";
+    let n = 0;
+    for (const t of TROPHIES){
+      const li = document.createElement("li");
+      if (won[t.id]){ li.className = "won"; n++; }
+      const b = document.createElement("span"); b.className="badge"; b.textContent = won[t.id] ? "★" : "";
+      const box = document.createElement("div");
+      const nm = document.createElement("div"); nm.className="tname"; nm.textContent = tr("trophy."+t.id+".name");
+      const hw = document.createElement("div"); hw.className="thow"; hw.textContent = tr("trophy."+t.id+".how");
+      box.append(nm,hw); li.append(b,box); ul.append(li);
+    }
+    $("tcount").textContent = n+" / "+TROPHIES.length;
+  }
+  function checkTrophies(d, look){
+    if (state.size <= 0.12) award("tiny");
+    if (state.size >= 10 && !d.star && !d.blackHole) award("giant");
+    if (d.star) award("star");
+    if (d.blackHole) award("hole");
+    if (look.kind === "ice") award("snowball");
+    if (d.T > 773 && !d.star && !d.blackHole) award("furnace");
+    if (fxSpark){ fxSpark = false; award("spark"); }
+    if (state.pop >= 1e11) award("crowded");
+    if (state.peaceYears >= 1e9) award("ancient");
+    if (fx.eclipse) award("moonlit");
+    if (state.ringsOn) award("rings");
+    if (d.habitable && seaLevel() >= 0.9) award("ocean");
+  }
+  function markVisited(name){
+    if (visited[name]) return;
+    visited[name] = true;
+    try { localStorage.setItem("planet-tinkerer-visited", JSON.stringify(visited)); } catch(e){}
+    if (Object.keys(PRESETS).every(n=>visited[n])) award("grand");
+  }
+
+  /* ================= noise ================= */
+  const PERM = new Uint8Array(512);
+  function rng(seed){ let s = (seed>>>0)||1; return () => (s = (s*1664525+1013904223)>>>0)/4294967296; }
+  (function(){
+    const r = rng(20260920), p = new Uint8Array(256);
+    for (let i=0;i<256;i++) p[i]=i;
+    for (let i=255;i>0;i--){ const j=(r()*(i+1))|0, t=p[i]; p[i]=p[j]; p[j]=t; }
+    for (let i=0;i<512;i++) PERM[i]=p[i&255];
+  })();
+  function vnoise(x,y,z){
+    const xi=Math.floor(x), yi=Math.floor(y), zi=Math.floor(z);
+    const xf=x-xi, yf=y-yi, zf=z-zi;
+    const u=xf*xf*(3-2*xf), v=yf*yf*(3-2*yf), w=zf*zf*(3-2*zf);
+    const X=xi&255, Y=yi&255, Z=zi&255;
+    const A=PERM[X]+Y, B=PERM[X+1]+Y;
+    const AA=PERM[A&255]+Z, AB=PERM[(A+1)&255]+Z, BA=PERM[B&255]+Z, BB=PERM[(B+1)&255]+Z;
+    const c000=PERM[AA&255], c100=PERM[BA&255], c010=PERM[AB&255], c110=PERM[BB&255];
+    const c001=PERM[(AA+1)&255], c101=PERM[(BA+1)&255], c011=PERM[(AB+1)&255], c111=PERM[(BB+1)&255];
+    const x00=c000+(c100-c000)*u, x10=c010+(c110-c010)*u;
+    const x01=c001+(c101-c001)*u, x11=c011+(c111-c011)*u;
+    const y0=x00+(x10-x00)*v, y1=x01+(x11-x01)*v;
+    return (y0+(y1-y0)*w)/255;
+  }
+  function fbm(x,y,z,oct,gain){
+    let a=1,f=1,s=0,n=0;
+    for (let i=0;i<oct;i++){ s+=a*vnoise(x*f,y*f,z*f); n+=a; a*=gain; f*=2.03; }
+    return s/n;
+  }
+  function ridged(x,y,z,oct){
+    let a=1,f=1,s=0,n=0;
+    for (let i=0;i<oct;i++){ s+=a*(1-Math.abs(2*vnoise(x*f,y*f,z*f)-1)); n+=a; a*=0.55; f*=2.11; }
+    return s/n;
+  }
+
+  /* ================= surface fields ================= */
+  const TW = 1024, TH = 512, TN = TW*TH;
+  const fElev  = new Float32Array(TN);
+  const fMoist = new Float32Array(TN);
+  const fRidge = new Float32Array(TN);
+  const fCrater= new Float32Array(TN);
+  const fCloud = new Uint8Array(TN);
+  const tex    = new Uint8Array(TN*4);
+  const emis   = new Uint8Array(TN);
+  const sinLat = new Float32Array(TH), latN = new Float32Array(TH), latS = new Float32Array(TH);
+  (function(){
+    for (let j=0;j<TH;j++){
+      const lat = (0.5-(j+0.5)/TH)*Math.PI;
+      sinLat[j]=Math.sin(lat); latN[j]=Math.abs(lat)/(Math.PI/2); latS[j]=lat/(Math.PI/2);
+    }
+  })();
+
+  let genRow = TH, fieldsReady = false, texSig = "", texReady = false;
+  const OFF = {x:0,y:0,z:0};
+
+  function startFields(){
+    const r = rng(state.seed*2654435761 >>> 0);
+    OFF.x = r()*640; OFF.y = r()*640; OFF.z = r()*640;
+    genRow = 0; fieldsReady = false; texReady = false; texSig = "";
+  }
+
+  function generateChunk(rows){
+    const end = Math.min(TH, genRow+rows);
+    for (let j=genRow;j<end;j++){
+      const sl=sinLat[j], cl=Math.sqrt(Math.max(0,1-sl*sl)), base=j*TW;
+      for (let i=0;i<TW;i++){
+        const lon=(i+0.5)/TW*Math.PI*2;
+        const px=cl*Math.cos(lon)+OFF.x, py=sl+OFF.y, pz=cl*Math.sin(lon)+OFF.z;
+        const cont=fbm(px*1.25,py*1.25,pz*1.25,3,0.5);
+        const det =fbm(px*4.1, py*4.1, pz*4.1, 4,0.5);
+        let e=cont*0.72+det*0.28;
+        e=clamp((e-0.5)*1.9+0.5,0,1);
+        fElev[base+i]=e;
+        fMoist[base+i]=fbm(px*2.7+31,py*2.7+11,pz*2.7+57,3,0.55);
+        fRidge[base+i]=ridged(px*5.5+7,py*5.5+3,pz*5.5+19,3);
+        let c=fbm(px*3.1+91,py*3.1+41,pz*3.1+13,4,0.55);
+        const bandy=0.62+0.38*Math.cos(latN[j]*Math.PI*3.1);
+        c=clamp((c-0.355)*3.4,0,1)*bandy;
+        fCloud[base+i]=(c*255)|0;
+      }
+    }
+    genRow=end;
+    if (genRow >= TH){ stampCraters(); fieldsReady=true; texSig=""; if (!moonReady) buildMoonTexture(); }
+  }
+
+  function stampCraters(){
+    fCrater.fill(0);
+    const r = rng((state.seed*97+13)>>>0);
+    for (let c=0;c<150;c++){
+      const lat0=Math.asin(r()*2-1), lon0=r()*Math.PI*2;
+      const ang=0.012+Math.pow(r(),2.4)*0.16, depth=0.35+r()*0.5;
+      const j0=Math.max(0,Math.floor((0.5-(lat0+ang)/Math.PI)*TH));
+      const j1=Math.min(TH-1,Math.ceil((0.5-(lat0-ang)/Math.PI)*TH));
+      const s0=Math.sin(lat0), c0=Math.cos(lat0);
+      for (let j=j0;j<=j1;j++){
+        const sl=sinLat[j], cl=Math.sqrt(Math.max(0,1-sl*sl));
+        const cosd0=s0*sl, k=c0*cl;
+        if (k<=1e-6) continue;
+        const cm=(Math.cos(ang)-cosd0)/k;
+        if (cm>1) continue;
+        const dlonMax = cm<-1 ? Math.PI : Math.acos(clamp(cm,-1,1));
+        const iw=Math.ceil(dlonMax/(Math.PI*2)*TW), ic=Math.round(lon0/(Math.PI*2)*TW), base=j*TW;
+        for (let di=-iw;di<=iw;di++){
+          let i=(ic+di)%TW; if (i<0) i+=TW;
+          const lon=(i+0.5)/TW*Math.PI*2;
+          const dd=Math.acos(clamp(cosd0+k*Math.cos(lon-lon0),-1,1));
+          const t=dd/ang; if (t>=1) continue;
+          fCrater[base+i] += t<0.74 ? -depth*(1-t*t*0.6)
+                                    : depth*1.05*Math.sin(((t-0.74)/0.26)*Math.PI)*0.9;
+        }
+      }
+    }
+  }
+
+  /* ---- the moon gets its own little texture, built once ---- */
+  const MW = 512, MH = 256, MN = MW*MH;
+  const mtex = new Uint8Array(MN*4);
+  let moonReady = false;
+  function buildMoonTexture(){
+    const cr = new Float32Array(MN);
+    const msin = new Float32Array(MH);
+    for (let j=0;j<MH;j++) msin[j]=Math.sin((0.5-(j+0.5)/MH)*Math.PI);
+    const r = rng(1234567);
+    for (let c=0;c<220;c++){
+      const lat0=Math.asin(r()*2-1), lon0=r()*Math.PI*2;
+      const ang=0.02+Math.pow(r(),2.2)*0.19, depth=0.4+r()*0.6;
+      const j0=Math.max(0,Math.floor((0.5-(lat0+ang)/Math.PI)*MH));
+      const j1=Math.min(MH-1,Math.ceil((0.5-(lat0-ang)/Math.PI)*MH));
+      const s0=Math.sin(lat0), c0=Math.cos(lat0);
+      for (let j=j0;j<=j1;j++){
+        const sl=msin[j], cl=Math.sqrt(Math.max(0,1-sl*sl));
+        const cosd0=s0*sl, k=c0*cl;
+        if (k<=1e-6) continue;
+        const cm=(Math.cos(ang)-cosd0)/k;
+        if (cm>1) continue;
+        const dlonMax = cm<-1 ? Math.PI : Math.acos(clamp(cm,-1,1));
+        const iw=Math.ceil(dlonMax/(Math.PI*2)*MW), ic=Math.round(lon0/(Math.PI*2)*MW), base=j*MW;
+        for (let di=-iw;di<=iw;di++){
+          let i=(ic+di)%MW; if (i<0) i+=MW;
+          const lon=(i+0.5)/MW*Math.PI*2;
+          const dd=Math.acos(clamp(cosd0+k*Math.cos(lon-lon0),-1,1));
+          const t=dd/ang; if (t>=1) continue;
+          cr[base+i] += t<0.72 ? -depth*(1-t*t*0.55) : depth*Math.sin(((t-0.72)/0.28)*Math.PI);
+        }
+      }
+    }
+    for (let j=0;j<MH;j++){
+      const sl=msin[j], cl=Math.sqrt(Math.max(0,1-sl*sl)), base=j*MW;
+      for (let i=0;i<MW;i++){
+        const lon=(i+0.5)/MW*Math.PI*2;
+        const px=cl*Math.cos(lon)+400, py=sl+180, pz=cl*Math.sin(lon)+90;
+        const h=fbm(px*2.4,py*2.4,pz*2.4,3,0.55);
+        const mare=clamp((0.44-fbm(px*1.1+9,py*1.1+2,pz*1.1+4,2,0.5))*3.4,0,1);
+        const k=base+i, o=k<<2, c=cr[k];
+        let v = mix(122,176,h);
+        v += clamp(c,0,1)*48 - clamp(-c,0,1)*36;
+        v = mix(v, 74, mare*0.7);
+        v += (vnoise(i*0.8,j*0.8,7)-0.5)*12;
+        mtex[o]=v*1.02; mtex[o+1]=v; mtex[o+2]=v*0.94; mtex[o+3]=0;
+      }
+    }
+    moonReady = true;
+  }
+
+  /* ================= surface colours ================= */
+  function lookOf(d){
+    if (d.blackHole) return {kind:"hole"};
+    if (d.star) return {kind:"star"};
+    if (d.gas)  return {kind:"gas"};
+    if (d.T > 900) return {kind:"lava"};
+    if (d.T < 240 && state.water > 0.15) return {kind:"ice"};
+    if (state.water > 0.05 && (d.water === "liquid" || d.water === "ice")) return {kind:"terra"};
+    if (state.dens < 0.68) return {kind:"moon"};
+    return {kind:"dust"};
+  }
+  function seaLevel(){ return clamp(0.58*Math.pow(Math.max(state.water,0),0.30), 0, 0.95); }
+  function signature(d, look){
+    return [look.kind, Math.round(seaLevel()*30), Math.round(clamp((300-d.T)/60,0,1.2)*14),
+            Math.round(clamp(d.T/260,0,8)*4), state.stage>=5&&state.pop>=1?1:0, state.seed].join("|");
+  }
+
+  function colorize(d, look){
+    const sea = seaLevel();
+    const iceAmt = clamp((300-d.T)/60,0,1.2)*clamp(state.water*3,0.12,1);
+    const cities = state.stage >= 5 && state.pop >= 1;
+    const kind = look.kind;
+    emis.fill(0);
+    for (let j=0;j<TH;j++){
+      const ln=latN[j], base=j*TW;
+      for (let i=0;i<TW;i++){
+        const k=base+i, o=k<<2;
+        const e=fElev[k], mo=fMoist[k], rg=fRidge[k], cr=fCrater[k];
+        let r,g,b,spec=0,em=0;
+
+        if (kind === "gas"){
+          const ls=latS[j];
+          const warp=(rg-0.5)*0.10+(fMoist[k]-0.5)*0.09;
+          const y=ls+warp;
+          const band=Math.sin(y*17.0+0.7)*0.5+0.5;
+          const zone=Math.sin(y*5.5-0.4)*0.5+0.5;
+          const polar=clamp((Math.abs(ls)-0.72)*3.0,0,1);
+          r=mix(mix(168,238,band),248,zone*0.40);
+          g=mix(mix(126,214,band),230,zone*0.40);
+          b=mix(mix(86,176,band), 204,zone*0.40);
+          const turb=(fMoist[k]-0.5)*40;
+          r+=turb; g+=turb*0.9; b+=turb*0.72;
+          const sy=ls+0.26, sx=Math.abs(((i/TW)-0.62+1.5)%1-0.5)*2;
+          const spot=Math.exp(-(sx*sx*17+sy*sy*150));
+          if (spot>0.02){ r=mix(r,196,spot); g=mix(g,92,spot); b=mix(b,64,spot); }
+          r=mix(r,150,polar*0.55); g=mix(g,130,polar*0.55); b=mix(b,126,polar*0.55);
+        }
+        else if (kind === "lava"){
+          const crack=clamp((rg-0.62)*3.4,0,1)*clamp((0.75-e)*2.2,0,1);
+          const hot=clamp(crack*1.25+Math.max(0,(0.34-e))*0.9,0,1);
+          r=mix(40,88,e); g=mix(24,44,e); b=mix(20,36,e);
+          r=mix(r,255,hot); g=mix(g,150,hot*hot); b=mix(b,40,hot*hot*hot);
+          em=(hot*245)|0;
+        }
+        else if (kind === "ice"){
+          const cra=clamp((rg-0.58)*3.0,0,1);
+          r=mix(214,246,e); g=mix(230,251,e); b=mix(243,255,e);
+          r-=cra*58; g-=cra*40; b-=cra*12;
+          const dirt=clamp((mo-0.62)*2.0,0,1)*0.35;
+          r=mix(r,186,dirt); g=mix(g,176,dirt); b=mix(b,166,dirt);
+          spec=90;
+        }
+        else if (kind === "moon"){
+          const h=clamp(e+cr*0.5,0,1);
+          const mare=clamp((0.40-e)*3.2,0,1)*clamp((mo-0.38)*2.2,0,1);
+          r=mix(126,178,h); g=mix(121,172,h); b=mix(113,162,h);
+          const rim=clamp(cr,0,1), flo=clamp(-cr,0,1);
+          r+=rim*46-flo*34; g+=rim*44-flo*33; b+=rim*40-flo*31;
+          r=mix(r,68,mare*0.85); g=mix(g,66,mare*0.85); b=mix(b,64,mare*0.85);
+          const dust=(vnoise(i*0.7,j*0.7,3)-0.5)*14;
+          r+=dust; g+=dust; b+=dust;
+        }
+        else if (kind === "dust"){
+          const h=clamp(e+cr*0.35,0,1);
+          const dark=clamp((mo-0.5)*2.2,0,1);
+          r=mix(146,212,h); g=mix(74,128,h); b=mix(46,84,h);
+          r=mix(r,108,dark*0.5); g=mix(g,62,dark*0.5); b=mix(b,44,dark*0.5);
+          const rim=clamp(cr,0,1)*40;
+          r+=rim; g+=rim*0.8; b+=rim*0.6;
+          const cap=clamp((ln-(1.02-iceAmt*0.9))*7.0,0,1);
+          if (cap>0){ r=mix(r,244,cap); g=mix(g,248,cap); b=mix(b,252,cap); }
+        }
+        else {
+          const h=e;
+          if (h < sea){
+            const dep=clamp((sea-h)/Math.max(sea,0.05),0,1);
+            r=mix(26,4,dep*dep); g=mix(78,17,dep*dep); b=mix(128,52,dep*dep);
+            const shelf=clamp((0.05-(sea-h))*20,0,1);
+            r=mix(r,34,shelf*0.8); g=mix(g,112,shelf*0.8); b=mix(b,146,shelf*0.8);
+            spec=255;
+          } else {
+            const a=clamp((h-sea)/Math.max(1-sea,0.05),0,1);
+            const dry=clamp(1-Math.abs(ln-0.28)*3.4,0,1)*clamp(1-mo*1.15,0,1);
+            const trop=clamp(1-ln*2.6,0,1);
+            const cold=clamp((ln-0.55)*2.6,0,1);
+            r=mix(104,80,mo); g=mix(102,100,mo); b=mix(66,56,mo);
+            r=mix(r,54,trop*0.6); g=mix(g,84,trop*0.6); b=mix(b,40,trop*0.6);
+            r=mix(r,186,dry*0.92); g=mix(g,152,dry*0.92); b=mix(b,100,dry*0.92);
+            r=mix(r,124,cold*0.5); g=mix(g,122,cold*0.5); b=mix(b,104,cold*0.5);
+            const beach=clamp(1-a*30,0,1);
+            r=mix(r,196,beach*0.55); g=mix(g,180,beach*0.55); b=mix(b,142,beach*0.55);
+            const mount=clamp((a-0.34)*2.6,0,1)*clamp(rg*1.2,0,1);
+            r=mix(r,112,mount); g=mix(g,104,mount); b=mix(b,94,mount);
+            const snow=clamp((a-0.62)*4.0,0,1);
+            r=mix(r,240,snow); g=mix(g,244,snow); b=mix(b,250,snow);
+            if (cities){
+              const cl=clamp((mo-0.46)*3.0,0,1)*clamp(1-a*5.0,0,1)*clamp(1-ln*1.35,0,1);
+              const sp=vnoise(i*0.52+5,j*0.52+9,11);
+              if (cl>0.05 && sp>0.62) em=clamp((sp-0.62)*4.6*cl*255,0,255)|0;
+            }
+          }
+          const ice=clamp((ln-(1.03-iceAmt*0.95))*6.5,0,1);
+          if (ice>0){
+            r=mix(r,236,ice); g=mix(g,244,ice); b=mix(b,252,ice);
+            spec=mix(spec,70,ice);
+          }
+        }
+        tex[o]=r; tex[o+1]=g; tex[o+2]=b; tex[o+3]=spec;
+        emis[k]=em;
+      }
+    }
+    texReady = true;
+  }
+
+  function colorizeStar(T){
+    emis.fill(0);
+    const h=clamp((T-2600)/5200,0,1);
+    const coolR=255, coolG=mix(118,190,h), coolB=mix(34,150,h);
+    const hotR=255,  hotG=mix(206,250,h), hotB=mix(120,238,h);
+    for (let j=0;j<TH;j++){
+      const base=j*TW;
+      for (let i=0;i<TW;i++){
+        const k=base+i, o=k<<2;
+        const t=clamp((fMoist[k]*0.5+fRidge[k]*0.5-0.40)*2.6,0,1);
+        tex[o]=mix(coolR,hotR,t); tex[o+1]=mix(coolG,hotG,t); tex[o+2]=mix(coolB,hotB,t); tex[o+3]=0;
+      }
+    }
+    texReady = true;
+  }
+
+  /* ================= sphere rendering ================= */
+  const Lx0=-0.58, Ly0=-0.42, Lz0=0.70;
+  const LL=Math.hypot(Lx0,Ly0,Lz0), lx=Lx0/LL, ly=Ly0/LL, lz=Lz0/LL;
+  const hx0=lx, hy0=ly, hz0=lz+1, HL=Math.hypot(hx0,hy0,hz0);
+  const Hx=hx0/HL, Hy=hy0/HL, Hz=hz0/HL;
+
+  function makeBody(){
+    const c=document.createElement("canvas");
+    return {c, x:c.getContext("2d"), img:null, data:null, g:null, R:0, tw:0};
+  }
+  const planetBody = makeBody(), moonBody = makeBody();
+
+  function ensureBody(bd, Rr, tw, th){
+    if (bd.R===Rr && bd.tw===tw) return;
+    const S=Rr*2;
+    bd.c.width=S; bd.c.height=S;
+    bd.img=bd.x.createImageData(S,S);
+    bd.data=bd.img.data;
+    const cap=Math.ceil(S*S*0.8);
+    const u0=new Float32Array(cap), row=new Int32Array(cap), dst=new Int32Array(cap),
+          dif=new Float32Array(cap), spc=new Float32Array(cap), lmb=new Float32Array(cap),
+          sun=new Float32Array(cap), nit=new Float32Array(cap), ldk=new Float32Array(cap);
+    let n=0;
+    for (let y=0;y<S;y++){
+      const nyS=(y+0.5-Rr)/Rr;
+      for (let x=0;x<S;x++){
+        const nx=(x+0.5-Rr)/Rr, q=nx*nx+nyS*nyS;
+        if (q>=0.999 || n>=cap) continue;
+        const ny=-nyS, nz=Math.sqrt(1-q);
+        const lat=Math.asin(clamp(ny,-1,1)), lon=Math.atan2(nx,nz);
+        let u=lon/(Math.PI*2); u-=Math.floor(u);
+        u0[n]=u;
+        let ty=((0.5-lat/Math.PI)*th)|0; ty=clamp(ty,0,th-1);
+        row[n]=ty*tw;
+        dst[n]=(y*S+x)<<2;
+        const ndl=nx*lx+ny*ly+nz*lz;
+        dif[n]=ndl>0?ndl:0;
+        const ndh=nx*Hx+ny*Hy+nz*Hz;
+        spc[n]=(ndl>0&&ndh>0)?Math.pow(ndh,190):0;
+        lmb[n]=Math.pow(1-nz,3.1);
+        sun[n]=Math.exp(-(ndl*13)*(ndl*13));
+        nit[n]=clamp(-ndl*2.4,0,1);
+        ldk[n]=Math.pow(nz,0.42);
+        n++;
+      }
+    }
+    bd.g={n,u0,row,dst,dif,spc,lmb,sun,nit,ldk,S};
+    bd.R=Rr; bd.tw=tw;
+  }
+
+  function shadeBody(bd, texA, emisA, cloudA, U){
+    const G=bd.g, img=bd.data, tw=U.tw;
+    let ru=U.rot; ru-=Math.floor(ru);
+    let cu0=U.cloudRot; cu0-=Math.floor(cu0);
+    for (let k=0;k<G.n;k++){
+      let u=G.u0[k]+ru; u-=Math.floor(u);
+      const ti=G.row[k]+((u*tw)|0), o=ti<<2;
+      let r,g,b;
+      if (U.isStar){
+        const L=G.ldk[k]*U.flick;
+        r=texA[o]*L*1.02; g=texA[o+1]*L; b=texA[o+2]*L;
+        const rim=G.lmb[k];
+        r+=rim*70; g+=rim*20; b-=rim*8;
+      } else {
+        const dif=G.dif[k]*U.sunI, sh=U.amb+dif;
+        r=texA[o]*sh; g=texA[o+1]*sh; b=texA[o+2]*sh;
+        const sp=G.spc[k]*texA[o+3]*U.specK*U.sunI;
+        if (sp>0.4){ r+=sp; g+=sp*0.96; b+=sp*0.86; }
+        if (emisA){
+          const ne=emisA[ti];
+          if (ne){ const e=ne*(U.emisBase+U.emisNight*G.nit[k]); r+=e*U.emR; g+=e*U.emG; b+=e*U.emB; }
+        }
+        if (cloudA && U.cloudCov>0.01){
+          let cu=G.u0[k]+cu0; cu-=Math.floor(cu);
+          let a=cloudA[G.row[k]+((cu*tw)|0)]*U.cloudInv;
+          if (U.overcast>0) a+=(0.96-a)*U.overcast;
+          if (a>0.008){
+            const cl=(0.05+dif)*255;
+            r+=(cl*U.cR-r)*a; g+=(cl*U.cG-g)*a; b+=(cl*U.cB-b)*a;
+          }
+        }
+        if (U.airK>0.01){
+          const at=G.lmb[k]*U.airK*(0.22+0.78*dif);
+          r+=at*U.aR; g+=at*U.aG; b+=at*U.aB;
+          const sn=G.sun[k]*U.airK*0.55*U.sunI;
+          r+=sn*190; g+=sn*96; b+=sn*42;
+        }
+      }
+      const dp=G.dst[k];
+      img[dp]=r; img[dp+1]=g; img[dp+2]=b; img[dp+3]=255;
+    }
+    bd.x.putImageData(bd.img,0,0);
+  }
+
+  /* ================= sky ================= */
+  const bgCanvas=document.createElement("canvas"), bgCtx=bgCanvas.getContext("2d");
+  let bgW=0,bgH=0,bgData=null;
+
+  function paintSky(w,h){
+    bgW=Math.max(2,w|0); bgH=Math.max(2,h|0);
+    bgCanvas.width=bgW; bgCanvas.height=bgH;
+    const g=bgCtx;
+    const grad=g.createLinearGradient(0,0,bgW,bgH);
+    grad.addColorStop(0,"#05040C"); grad.addColorStop(0.5,"#030308"); grad.addColorStop(1,"#070613");
+    g.fillStyle=grad; g.fillRect(0,0,bgW,bgH);
+    g.save();
+    g.translate(bgW*0.5,bgH*0.42); g.rotate(-0.42);
+    const mw=g.createLinearGradient(0,-bgH*0.34,0,bgH*0.34);
+    mw.addColorStop(0,"rgba(70,72,120,0)");
+    mw.addColorStop(0.42,"rgba(104,104,158,0.13)");
+    mw.addColorStop(0.5,"rgba(148,140,190,0.19)");
+    mw.addColorStop(0.58,"rgba(104,104,158,0.13)");
+    mw.addColorStop(1,"rgba(70,72,120,0)");
+    g.fillStyle=mw; g.fillRect(-bgW,-bgH*0.34,bgW*2,bgH*0.68);
+    const r0=rng(424242);
+    for (let i=0;i<900;i++){
+      const x=(r0()-0.5)*bgW*1.7, y=(r0()-0.5)*bgH*0.5*(0.4+r0()*0.6);
+      g.globalAlpha=0.05+r0()*0.16;
+      g.fillStyle=r0()<0.5?"#C9C4E8":"#E8D9C4";
+      g.fillRect(x,y,1,1);
+    }
+    g.globalAlpha=1; g.restore();
+    const r=rng(97531);
+    const count=Math.round(bgW*bgH/1600);
+    for (let i=0;i<count;i++){
+      const x=r()*bgW, y=r()*bgH, m=Math.pow(r(),3.2);
+      const rad=0.35+m*1.9, a=0.18+m*0.82, t=r();
+      const col = t<0.12?"180,200,255":t<0.3?"255,240,225":t<0.55?"255,255,255":t<0.82?"255,228,196":"255,196,158";
+      g.globalAlpha=a; g.fillStyle="rgb("+col+")";
+      g.beginPath(); g.arc(x,y,rad,0,6.2832); g.fill();
+      if (m>0.72){
+        g.globalAlpha=a*0.5;
+        const gl=g.createRadialGradient(x,y,0,x,y,rad*7);
+        gl.addColorStop(0,"rgba("+col+",0.55)"); gl.addColorStop(1,"rgba("+col+",0)");
+        g.fillStyle=gl; g.beginPath(); g.arc(x,y,rad*7,0,6.2832); g.fill();
+      }
+    }
+    g.globalAlpha=1;
+    try { bgData=bgCtx.getImageData(0,0,bgW,bgH); } catch(e){ bgData=null; }
+  }
+
+  /* ================= main canvas ================= */
+  const cv=$("sky"), ctx=cv.getContext("2d");
+  let W=0,H=0,DPR=1,MAXR=300,slowFrames=0;
+
+  function resize(){
+    const rect=cv.getBoundingClientRect();
+    DPR=Math.min(window.devicePixelRatio||1,2);
+    W=Math.max(1,Math.round(rect.width)); H=Math.max(1,Math.round(rect.height));
+    cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    paintSky(Math.round(W*DPR),Math.round(H*DPR));
+    planetBody.R=0; moonBody.R=0;
+  }
+
+  function planetUniforms(d, look){
+    const isStar=look.kind==="star", isGas=look.kind==="gas";
+    const airK=isGas?0.22:clamp(Math.log(1+state.air*4)*0.30,0,1.2);
+    const cloudCov=(isStar||isGas)?0:clamp(1-Math.exp(-state.air*0.95*(state.water>0.05?1:0.5)),0,0.99);
+    const hotAir=d.T>600;
+    return {
+      tw:TW, isStar, amb:isStar?0:0.05, sunI:1,
+      specK:look.kind==="terra"?1.0:0.35,
+      cloudCov, cloudInv:cloudCov/255, overcast:clamp((cloudCov-0.62)/0.38,0,1),
+      cR:1.0, cG:hotAir?0.93:0.99, cB:hotAir?0.72:0.98,
+      airK, aR:isGas?140:(hotAir?150:52), aG:isGas?118:(hotAir?116:110), aB:isGas?92:(hotAir?70:210),
+      emisBase:look.kind==="lava"?0.55:0, emisNight:look.kind==="lava"?0.45:1,
+      emR:1, emG:look.kind==="lava"?0.42:0.80, emB:look.kind==="lava"?0.12:0.44,
+      rot:rot/(Math.PI*2), cloudRot:rot/(Math.PI*2)*1.02+cloudRot,
+      flick:isStar?(1+0.02*Math.sin(performance.now()/260)):1
+    };
+  }
+
+  /* ---- moon orbit: a circle whose plane contains the sunlight, so eclipses happen ---- */
+  let vX=0,vY=0,vZ=0;
+  (function(){
+    const ax=0.22, ay=1, az=0.16;
+    let x=ly*az-lz*ay, y=lz*ax-lx*az, z=lx*ay-ly*ax;
+    const n=Math.hypot(x,y,z); vX=x/n; vY=y/n; vZ=z/n;
+  })();
+  function moonVec(){
+    const R=state.moonDist, ca=Math.cos(moonAng), sa=Math.sin(moonAng);
+    return {x:R*(ca*lx+sa*vX), y:R*(ca*ly+sa*vY), z:R*(ca*lz+sa*vZ)};
+  }
+
+  function drawRings(cx,cy,pr,half){
+    const tilt=0.28, rin=pr*1.33, rout=pr*2.36;
+    const shadowA=-0.63;                       // opposite the sun, in screen angle
+    ctx.save();
+    for (let i=0;i<44;i++){
+      const t=i/43, rr=rin+(rout-rin)*t;
+      if (t>0.40 && t<0.47) continue;          // the gap
+      const dens=0.16+0.34*(0.5+0.5*Math.sin(t*38+1.3))*(0.5+0.5*Math.sin(t*11-0.6));
+      const tone=mix(196,238,0.5+0.5*Math.sin(t*23));
+      ctx.lineWidth=Math.max(1,(rout-rin)/40);
+      ctx.strokeStyle="rgba("+Math.round(tone)+","+Math.round(tone*0.95)+","+Math.round(tone*0.85)+","+dens.toFixed(3)+")";
+      ctx.beginPath();
+      if (half==="back") ctx.ellipse(cx,cy,rr,rr*tilt,0,Math.PI,Math.PI*2);
+      else               ctx.ellipse(cx,cy,rr,rr*tilt,0,0,Math.PI);
+      ctx.stroke();
+      // the planet's shadow falling across the rings
+      const hw=Math.asin(clamp(pr/rr,0,1))*1.05;
+      const a0=shadowA-hw, a1=shadowA+hw;
+      const inHalf = half==="back" ? (shadowA<0) : (shadowA>0);
+      if (inHalf){
+        ctx.strokeStyle="rgba(6,5,14,"+(dens*2.2).toFixed(3)+")";
+        ctx.beginPath(); ctx.ellipse(cx,cy,rr,rr*tilt,0,a0,a1); ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawMoon(cx,cy,pr,d){
+    if (!state.moonOn || !moonReady) return null;
+    const m=moonVec();
+    const mr=Math.max(3, state.moonSize*pr);
+    // keep the orbit inside the window, however far away the moon really is
+    const sc=Math.min(pr, Math.min(W,H)*0.40/Math.max(state.moonDist,0.001));
+    const sx=cx+m.x*sc, sy=cy-m.y*sc;
+    // in the planet's shadow?
+    const dotL=m.x*lx+m.y*ly+m.z*lz;
+    const perp=Math.hypot(m.x-dotL*lx, m.y-dotL*ly, m.z-dotL*lz);
+    const eclipsed = dotL<0 && perp<1;
+    const Rr=clamp(Math.round(mr*DPR/3)*3,6,150);
+    ensureBody(moonBody,Rr,MW,MH);
+    shadeBody(moonBody,mtex,null,null,{
+      tw:MW,isStar:false,amb:0.035,sunI:eclipsed?0.07:1,specK:0,
+      cloudCov:0,cloudInv:0,overcast:0,cR:1,cG:1,cB:1,
+      airK:0,aR:0,aG:0,aB:0,emisBase:0,emisNight:0,emR:0,emG:0,emB:0,
+      rot:moonAng/(Math.PI*2)*0.35, cloudRot:0, flick:1
+    });
+    ctx.drawImage(moonBody.c, sx-mr, sy-mr, mr*2, mr*2);
+    return {m, mr, front:m.z>0};
+  }
+
+  function drawEclipse(cx,cy,pr){
+    if (!state.moonOn) return;
+    const m=moonVec();
+    const dotL=m.x*lx+m.y*ly+m.z*lz;
+    if (dotL<=0) return;                                   // moon is behind the planet
+    const perp=Math.hypot(m.x-dotL*lx, m.y-dotL*ly, m.z-dotL*lz);
+    if (perp>=1) return;                                   // shadow misses
+    const t=dotL-Math.sqrt(1-perp*perp);
+    const px=m.x-t*lx, py=m.y-t*ly, pz=m.z-t*lz;
+    if (pz<=0.15) return;                                  // lands on the far side
+    const ex=cx+px*pr, ey=cy-py*pr;
+    const rad=Math.max(6, state.moonSize*pr*2.6);
+    fx.eclipse=true;
+    if (!eclipseWas){ eclipseWas=true; say("log.eclipse","good"); }
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx,cy,pr,0,6.2832); ctx.clip();
+    const gl=ctx.createRadialGradient(ex,ey,rad*0.02,ex,ey,rad);
+    gl.addColorStop(0,"rgba(2,2,8,0.97)");
+    gl.addColorStop(0.30,"rgba(3,3,11,0.88)");
+    gl.addColorStop(0.62,"rgba(5,4,14,0.45)");
+    gl.addColorStop(1,"rgba(6,5,16,0)");
+    ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(ex,ey,rad,0,6.2832); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawHalo(cx,cy,pr,d,look){
+    const airK=clamp(Math.log(1+state.air*4)*0.34,0,1.15);
+    if (airK<0.02 || look.kind==="gas") return;
+    const hot=d.T>600, col=hot?"255,196,120":"126,186,255";
+    const outer=pr*(1.055+airK*0.075);
+    const gl=ctx.createRadialGradient(cx,cy,pr*0.985,cx,cy,outer);
+    gl.addColorStop(0,"rgba("+col+","+(0.42*airK).toFixed(3)+")");
+    gl.addColorStop(0.35,"rgba("+col+","+(0.17*airK).toFixed(3)+")");
+    gl.addColorStop(1,"rgba("+col+",0)");
+    ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(cx,cy,outer,0,6.2832); ctx.fill();
+  }
+
+  function drawSun(cx,cy,minD){
+    const sr=clamp(minD*0.062/Math.sqrt(state.dist),2,minD*0.26);
+    const gl=ctx.createRadialGradient(cx,cy,0,cx,cy,sr*6);
+    gl.addColorStop(0,"rgba(255,232,178,0.42)");
+    gl.addColorStop(0.18,"rgba(255,176,84,0.12)");
+    gl.addColorStop(1,"rgba(255,150,50,0)");
+    ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(cx,cy,sr*6,0,6.2832); ctx.fill();
+    const core=ctx.createRadialGradient(cx,cy,0,cx,cy,sr);
+    core.addColorStop(0,"#FFFEF6"); core.addColorStop(0.55,"#FFE7A8"); core.addColorStop(1,"#FFA63C");
+    ctx.fillStyle=core; ctx.beginPath(); ctx.arc(cx,cy,sr,0,6.2832); ctx.fill();
+  }
+
+  function drawCorona(cx,cy,pr,now){
+    ctx.save();
+    ctx.globalCompositeOperation="lighter";
+    const gl=ctx.createRadialGradient(cx,cy,pr*0.96,cx,cy,pr*2.6);
+    gl.addColorStop(0,"rgba(255,208,120,0.55)");
+    gl.addColorStop(0.18,"rgba(255,150,54,0.22)");
+    gl.addColorStop(1,"rgba(255,110,30,0)");
+    ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(cx,cy,pr*2.6,0,6.2832); ctx.fill();
+    for (let i=0;i<5;i++){
+      const a=now*0.10+i*1.27, rr=pr*(1.01+0.07*Math.abs(Math.sin(now*0.4+i)));
+      ctx.lineWidth=Math.max(1,pr*0.05);
+      ctx.strokeStyle="rgba(255,190,104,"+(0.07+0.05*Math.abs(Math.sin(now*0.6+i*2))).toFixed(3)+")";
+      ctx.beginPath(); ctx.arc(cx,cy,rr,a,a+0.5); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  const lensCanvas=document.createElement("canvas"), lensCtx=lensCanvas.getContext("2d");
+  function drawBlackHole(cx,cy,pr,now){
+    const rs=Math.max(6,pr*0.34), shadow=rs*2.6;
+    const S=Math.max(24,Math.min(Math.round(shadow*DPR*4.5),460));
+    if (lensCanvas.width!==S*2){ lensCanvas.width=S*2; lensCanvas.height=S*2; }
+    if (bgData){
+      const img=lensCtx.createImageData(S*2,S*2), dat=img.data, bd=bgData.data;
+      const ox=cx*DPR, oy=cy*DPR, rsDev=rs*DPR, shDev=shadow*DPR;
+      for (let y=0;y<S*2;y++){
+        const dyy=y-S;
+        for (let x=0;x<S*2;x++){
+          const dx=x-S, o=(y*S*2+x)<<2;
+          const r=Math.sqrt(dx*dx+dyy*dyy);
+          if (r<shDev){ dat[o+3]=255; continue; }
+          const b=r/rsDev, f=1+2.1/(b*b*0.42+0.55), sr=r*f;
+          const sx=Math.round(ox+(dx/r)*sr), sy=Math.round(oy+(dyy/r)*sr);
+          if (sx<0||sy<0||sx>=bgW||sy>=bgH) continue;
+          const so=(sy*bgW+sx)<<2;
+          dat[o]=bd[so]; dat[o+1]=bd[so+1]; dat[o+2]=bd[so+2]; dat[o+3]=255;
+        }
+      }
+      lensCtx.putImageData(img,0,0);
+      ctx.drawImage(lensCanvas, cx-S/DPR, cy-S/DPR, (S*2)/DPR, (S*2)/DPR);
+    }
+    const tilt=0.26, rin=rs*2.7, rout=rs*7.4;
+    function disc(fromA,toA){
+      ctx.save();
+      ctx.globalCompositeOperation="lighter";
+      ctx.lineWidth=Math.max(1,(rout-rin)/26);
+      for (let i=0;i<32;i++){
+        const t=i/31, rr=rin+(rout-rin)*t, heat=Math.pow(1-t,1.8);
+        const wob=1+0.03*Math.sin(now*0.8+i*0.9);
+        ctx.beginPath(); ctx.ellipse(cx,cy,rr*wob,rr*tilt*wob,0,fromA,toA);
+        ctx.strokeStyle="rgba(255,"+Math.round(146+100*heat)+","+Math.round(52+160*heat*heat)+","+(0.09+0.34*heat).toFixed(3)+")";
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    disc(Math.PI,Math.PI*2);
+    ctx.save(); ctx.globalCompositeOperation="lighter";
+    const eg=ctx.createRadialGradient(cx,cy,shadow*0.94,cx,cy,shadow*1.35);
+    eg.addColorStop(0,"rgba(255,236,190,0)");
+    eg.addColorStop(0.45,"rgba(255,228,172,0.9)");
+    eg.addColorStop(1,"rgba(255,170,80,0)");
+    ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(cx,cy,shadow*1.35,0,6.2832); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle="#000"; ctx.beginPath(); ctx.arc(cx,cy,shadow,0,6.2832); ctx.fill();
+    disc(0,Math.PI);
+  }
+
+  /* ---- aurora, satellites and escaping rockets ---- */
+  function drawAurora(cx,cy,pr,d,look){
+    if (look.kind==="gas"||look.kind==="star"||look.kind==="lava") return;
+    const strength = clamp(Math.log(1+state.air*3)*0.5,0,1)*clamp(state.spin*1.4,0,1);
+    if (strength < 0.12) return;
+    const now = performance.now()/1000;
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx,cy,pr*0.995,0,6.2832); ctx.clip();
+    ctx.globalCompositeOperation="lighter";
+    for (const sgn of [-1,1]){
+      const py=cy - sgn*pr*0.80;
+      for (let i=0;i<3;i++){
+        const w=pr*(0.30+i*0.07)*(1+0.06*Math.sin(now*1.3+i+sgn));
+        const h=pr*(0.085+i*0.03);
+        const a=(0.26-i*0.06)*strength*(0.65+0.35*Math.sin(now*0.9+i*1.7+sgn*2));
+        if (a<=0.004) continue;
+        ctx.strokeStyle = i===0 ? "rgba(120,255,190,"+a.toFixed(3)+")"
+                      : i===1 ? "rgba(96,220,255,"+a.toFixed(3)+")"
+                              : "rgba(178,130,255,"+a.toFixed(3)+")";
+        ctx.lineWidth=Math.max(1,pr*0.028);
+        ctx.beginPath();
+        ctx.ellipse(cx,py,w,h,0, sgn>0?Math.PI:0, sgn>0?Math.PI*2:Math.PI);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawSatellites(cx,cy,pr){
+    if (state.stage < 5 || state.pop < 1e8) return;
+    ctx.save();
+    ctx.globalCompositeOperation="lighter";
+    for (let i=0;i<6;i++){
+      const a=satAng*(1+i*0.18)+i*1.05;
+      const rr=pr*(1.09+i*0.035), tilt=0.30+i*0.11;
+      const x=cx+Math.cos(a)*rr, y=cy+Math.sin(a)*rr*tilt;
+      const front=Math.sin(a)>0;
+      ctx.globalAlpha=front?0.95:0.34;
+      ctx.fillStyle="#D8ECFF";
+      ctx.beginPath(); ctx.arc(x,y,Math.max(0.9,pr*0.011),0,6.2832); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function launchRockets(){
+    const r=[], n=11+Math.floor(Math.random()*7);
+    for (let i=0;i<n;i++) r.push({a:Math.random()*Math.PI*2, t:-Math.random()*0.55, sp:0.5+Math.random()*0.55});
+    fx.rockets=r; fx.rocketsDone=false;
+  }
+  function drawRockets(cx,cy,pr){
+    if (!fx.rockets) return;
+    ctx.save();
+    ctx.globalCompositeOperation="lighter";
+    for (const k of fx.rockets){
+      if (k.t<=0 || k.t>1.5) continue;
+      const rr=pr*(1+k.t*3.2);
+      const x=cx+Math.cos(k.a)*rr, y=cy+Math.sin(k.a)*rr;
+      const fade=clamp(1.5-k.t,0,1);
+      const tx=cx+Math.cos(k.a)*(rr-pr*0.30), ty=cy+Math.sin(k.a)*(rr-pr*0.30);
+      const gr=ctx.createLinearGradient(tx,ty,x,y);
+      gr.addColorStop(0,"rgba(255,140,50,0)");
+      gr.addColorStop(1,"rgba(255,206,130,"+(0.7*fade).toFixed(3)+")");
+      ctx.strokeStyle=gr; ctx.lineWidth=Math.max(1,pr*0.016);
+      ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(x,y); ctx.stroke();
+      ctx.fillStyle="rgba(255,244,214,"+fade.toFixed(3)+")";
+      ctx.beginPath(); ctx.arc(x,y,Math.max(1,pr*0.014),0,6.2832); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  /* ---- the incoming planet, the flash and the debris ---- */
+  function drawSmashFX(cx,cy,pr){
+    if (fx.inbound){
+      const s=fx.inbound, t=s.t, th=s.throw||{}, col=th.col||["#CDAE8E","#8A6A52","#33251E"];
+      const dist=(1-t)*(1-t)*8.5+1;
+      const ix=cx+Math.cos(s.a)*pr*dist, iy=cy+Math.sin(s.a)*pr*dist;
+      const ir=Math.max(3, clamp(s.rel,0.11,2.1)*pr);
+      if (th.glow){
+        ctx.save(); ctx.globalCompositeOperation="lighter";
+        const g2=ctx.createRadialGradient(ix,iy,ir*0.4,ix,iy,ir*3.2);
+        g2.addColorStop(0,"rgba(255,220,150,0.7)"); g2.addColorStop(1,"rgba(255,120,30,0)");
+        ctx.fillStyle=g2; ctx.beginPath(); ctx.arc(ix,iy,ir*3.2,0,6.2832); ctx.fill();
+        ctx.restore();
+      }
+      const gl=ctx.createRadialGradient(ix-ir*0.3,iy-ir*0.3,ir*0.08,ix,iy,ir);
+      gl.addColorStop(0,col[0]); gl.addColorStop(0.6,col[1]); gl.addColorStop(1,col[2]);
+      ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(ix,iy,ir,0,6.2832); ctx.fill();
+      if (th.dark){
+        ctx.strokeStyle="rgba(255,218,150,0.85)"; ctx.lineWidth=Math.max(1,ir*0.10);
+        ctx.beginPath(); ctx.arc(ix,iy,ir*1.08,0,6.2832); ctx.stroke();
+        ctx.fillStyle="#000"; ctx.beginPath(); ctx.arc(ix,iy,ir*0.86,0,6.2832); ctx.fill();
+      } else {
+        ctx.save(); ctx.globalCompositeOperation="lighter";
+        const tail=ctx.createRadialGradient(ix,iy,ir*0.5,ix,iy,ir*4.5);
+        tail.addColorStop(0,"rgba(255,190,110,0.5)"); tail.addColorStop(1,"rgba(255,120,40,0)");
+        ctx.fillStyle=tail; ctx.beginPath(); ctx.arc(ix,iy,ir*4.5,0,6.2832); ctx.fill();
+        ctx.restore();
+      }
+    }
+    if (fx.flash>0){
+      ctx.save(); ctx.globalCompositeOperation="lighter";
+      const a=fx.flash*fx.flash;
+      const gl=ctx.createRadialGradient(cx,cy,0,cx,cy,pr*(1.4+3.4*(1-fx.flash)));
+      gl.addColorStop(0,"rgba(255,248,224,"+(0.92*a).toFixed(3)+")");
+      gl.addColorStop(0.35,"rgba(255,186,96,"+(0.5*a).toFixed(3)+")");
+      gl.addColorStop(1,"rgba(255,120,30,0)");
+      ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(cx,cy,pr*(1.4+3.4*(1-fx.flash)),0,6.2832); ctx.fill();
+      ctx.restore();
+    }
+    if (fx.debris>0){
+      ctx.save(); ctx.globalCompositeOperation="lighter";
+      const p=1-fx.debris;
+      const r0=rng(9182736);
+      for (let i=0;i<70;i++){
+        const a=r0()*6.2832, sp=0.6+r0()*2.6;
+        const rr=pr*(1.02+p*sp*1.9);
+        const x=cx+Math.cos(a)*rr, y=cy+Math.sin(a)*rr*0.9;
+        const s=Math.max(0.8,pr*0.02*(0.4+r0()));
+        ctx.fillStyle="rgba(255,"+Math.round(150+80*r0())+",80,"+(fx.debris*0.7).toFixed(3)+")";
+        ctx.beginPath(); ctx.arc(x,y,s,0,6.2832); ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+
+  /* ================= standing on the surface ================= */
+  const EYE = 6, HSCALE = 110, ZMAX = 170;
+  const FP = {on:false, x:0, y:0, ang:0, pitch:0, vz:0, z:0, jumping:false, bob:0,
+              keys:{}, btn:{fwd:false,left:false,right:false}, info:0};
+  const fpCanvas=document.createElement("canvas"), fpCtx=fpCanvas.getContext("2d");
+  let fpImg=null, fpData=null, fpW=0, fpH=0, fpYbuf=null;
+  let fpCol=null, fpPrev=null, fpQual=0.78, fpSlow=0;
+  const fpStars=(function(){ const r=rng(777), a=[]; for(let i=0;i<220;i++) a.push({az:r()*6.2832, el:r(), m:r()}); return a; })();
+
+  function hexRGB(h){ const n=parseInt(h.slice(1),16); return [(n>>16)&255,(n>>8)&255,n&255]; }
+  function fpEnsure(w,h){
+    if (fpW===w && fpH===h) return;
+    fpW=w; fpH=h; fpCanvas.width=w; fpCanvas.height=h;
+    fpImg=fpCtx.createImageData(w,h); fpData=fpImg.data; fpYbuf=new Int32Array(w);
+  }
+  function elevAt(x,y){                     // smooth, so the ground rolls instead of stepping
+    const x0=Math.floor(x), y0=Math.floor(y), fx=x-x0, fy=y-y0;
+    let ix0=x0%TW; if(ix0<0)ix0+=TW;
+    const ix1=(ix0+1)%TW;
+    const iy0=clamp(y0,0,TH-1)*TW, iy1=clamp(y0+1,0,TH-1)*TW;
+    const a=fElev[iy0+ix0], b=fElev[iy0+ix1], c=fElev[iy1+ix0], e=fElev[iy1+ix1];
+    const t=a+(b-a)*fx;
+    return t+((c+(e-c)*fx)-t)*fy;
+  }
+  function texOff(x,y){
+    let ix=Math.floor(x)%TW; if(ix<0)ix+=TW;
+    const iy=clamp(Math.floor(y),0,TH-1);
+    return (iy*TW+ix)<<2;
+  }
+  /* small bumps and stones the big heightmap is far too coarse to hold */
+  function detailAt(x,y){
+    return (vnoise(x*0.42, y*0.42, 7.3)-0.5)*7.0 + (vnoise(x*1.55, y*1.55, 11.7)-0.5)*2.4;
+  }
+  function groundH(x,y,sea){
+    const e=elevAt(x,y);
+    return e<sea ? 0 : (e-sea)*HSCALE + detailAt(x,y);
+  }
+
+  function canLand(look){ return !(look.kind==="hole"||look.kind==="star"||look.kind==="gas"); }
+  function enterSurface(lat,lon){
+    const d=derive(), look=lookOf(d);
+    if (!fieldsReady || !texReady) return;
+    if (!canLand(look)){
+      say(look.kind==="gas" ? "fp.noGas" : look.kind==="star" ? "fp.noStar" : "fp.noHole","bad");
+      return;
+    }
+    FP.on=true;
+    FP.x=(((lon/(Math.PI*2))%1)+1)%1*TW;
+    FP.y=clamp((0.5-lat/Math.PI)*TH,1,TH-2);
+    FP.ang=Math.random()*Math.PI*2; FP.pitch=0; FP.vz=0; FP.jumping=false;
+    const sea0=seaLevel();
+    FP.z=groundH(FP.x,FP.y,sea0)+EYE;
+    const wet=elevAt(FP.x,FP.y)<sea0;
+    $("fpbar").hidden=false; $("fpctl").hidden=false;
+    $("landhint").hidden=true; $("zoomers").hidden=true;
+    document.querySelector(".verdict").hidden=true;
+    const sc=document.querySelector(".screen");
+    sc.classList.add("walking"); sc.classList.remove("aiming");
+    /* a starting world's name follows the language; a name the kid typed is kept as typed */
+    const pk = presetKeyOf(state.name);
+    say(wet ? "fp.wet" : "fp.landed", wet?"big":"big good",
+        wet ? null : {name: pk ? {t:"preset."+pk} : (state.name || {t:"fp.it"})});
+    award("boots");
+  }
+  function exitSurface(msg){
+    if (!FP.on) return;
+    FP.on=false;
+    FP.keys={}; FP.btn.fwd=FP.btn.left=FP.btn.right=false;
+    $("fpbar").hidden=true; $("fpctl").hidden=true;
+    $("landhint").hidden=false; $("zoomers").hidden=false;
+    document.querySelector(".verdict").hidden=false;
+    const sc=document.querySelector(".screen");
+    sc.classList.remove("walking"); sc.classList.add("aiming");
+    if (msg) say(msg,"bad");
+  }
+
+  function renderSurface(d, look, dt){
+    const sea=seaLevel();
+    /* --- moving about --- */
+    const turn=(FP.keys.left||FP.btn.left?-1:0)+(FP.keys.right||FP.btn.right?1:0);
+    FP.ang += turn*dt*1.7;
+    const fwd=((FP.keys.fwd||FP.btn.fwd)?1:0)-(FP.keys.back?1:0);
+    if (fwd){
+      const spd=13*dt*fwd;
+      FP.x += Math.cos(FP.ang)*spd; FP.y += Math.sin(FP.ang)*spd;
+      if (FP.x<0) FP.x+=TW; else if (FP.x>=TW) FP.x-=TW;
+      FP.y=clamp(FP.y,1,TH-2);
+      FP.bob += dt*7.4;
+    } else FP.bob += dt*1.1;
+    const g=clamp(d.g,0.015,10), gh=groundH(FP.x,FP.y,sea);
+    const bob=FP.jumping?0:Math.sin(FP.bob)*(fwd?0.34:0.07);
+    if (FP.jumping){
+      FP.vz -= 55*g*dt; FP.z += FP.vz*dt;
+      if (FP.z <= gh+EYE){ FP.z=gh+EYE; FP.vz=0; FP.jumping=false; }
+    } else {
+      FP.z += (gh+EYE+bob-FP.z)*Math.min(1,dt*9);
+    }
+
+    /* --- the view --- */
+    const t0=performance.now();
+    const W3=Math.max(220,Math.min(600,Math.round(W*fpQual)));
+    const H3=Math.max(140,Math.round(W3*H/Math.max(W,1)));
+    fpEnsure(W3,H3);
+    const data=fpData, sky=mcColors(d,look);
+    const S=hexRGB(sky.sky), F=hexRGB(sky.fog);
+    const horizon=Math.round(H3*0.52+FP.pitch);
+    const airless=d.P<0.05;
+    const now=performance.now()/1000;
+    const FOV=0.7854;                                   // half of a 90° view
+    const HALF=W3/2;
+
+    /* how the light behaves here: thin air = harsh sun and black shadows */
+    const airN=clamp(Math.log(1+state.air*3)*0.42,0,1);
+    const AMB=0.10+0.34*airN, SUN=1.18-0.30*airN;
+    const SUNAZ=0.9, SUNEL=0.62;
+    const Lx2=Math.cos(SUNAZ)*Math.cos(SUNEL), Ly2=Math.sin(SUNAZ)*Math.cos(SUNEL), Lz2=Math.sin(SUNEL);
+    const sinA=Math.sin(FP.ang), cosA=Math.cos(FP.ang);
+    /* camera right and forward on the map */
+    const Rx=-sinA, Ry=cosA, Fx=cosA, Fy=sinA;
+    const curve=0.45/(2*163*clamp(state.size,0.15,40));  // the world bends away from you
+    const cloudCov=(look.kind==="gas")?0:clamp(1-Math.exp(-state.air*0.95*(state.water>0.05?1:0.5)),0,0.99);
+
+    /* per-column sky and haze, warmer toward the sun */
+    if (!fpCol || fpCol.length!==W3*3) fpCol=new Float32Array(W3*3);
+    for (let i=0;i<W3;i++){
+      const rel=(i/W3-0.5)*2*FOV;
+      let dAz=rel + FP.ang - SUNAZ;
+      dAz=((dAz+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
+      const sun=Math.exp(-dAz*dAz*1.9)*(airless?0.15:0.7);
+      fpCol[i*3]  =mix(F[0],255,sun*0.55);
+      fpCol[i*3+1]=mix(F[1],214,sun*0.55);
+      fpCol[i*3+2]=mix(F[2],150,sun*0.55);
+    }
+
+    /* --- sky --- */
+    for (let y=0;y<H3;y++){
+      const t=clamp(y/Math.max(1,horizon),0,1), tt=t*t*t;
+      const el=(horizon-y)/Math.max(1,H3*0.92);
+      let o=y*W3*4;
+      for (let x=0;x<W3;x++){
+        const c=x*3;
+        let r=mix(S[0],fpCol[c],tt), g2=mix(S[1],fpCol[c+1],tt), b=mix(S[2],fpCol[c+2],tt);
+        if (cloudCov>0.02 && el>0.012){
+          const rel=(x/W3-0.5)*2*FOV, az=FP.ang+rel;
+          const dist=clamp(1/el,1,46)*16;
+          let cu=(FP.x+Math.cos(az)*dist)|0, cv=(FP.y+Math.sin(az)*dist)|0;
+          cu%=TW; if(cu<0)cu+=TW;
+          cv=clamp(cv,0,TH-1);
+          let a=fCloud[cv*TW+cu]/255*cloudCov*clamp(el*3.4,0,1);
+          if (a>0.01){
+            const lit=(d.T>600)?[248,226,186]:[250,252,255];
+            r=mix(r,lit[0],a); g2=mix(g2,lit[1],a); b=mix(b,lit[2],a);
+          }
+        }
+        data[o]=r; data[o+1]=g2; data[o+2]=b; data[o+3]=255; o+=4;
+      }
+    }
+    if (airless){
+      for (const st of fpStars){
+        let rel=st.az-FP.ang; rel=((rel+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
+        if (Math.abs(rel)>FOV+0.1) continue;
+        const sx=Math.round(HALF+rel/FOV*HALF);
+        const sy=Math.round(horizon-st.el*horizon*0.97);
+        if (sx<1||sx>=W3-1||sy<0||sy>=horizon) continue;
+        const v=130+st.m*125, o=(sy*W3+sx)*4;
+        data[o]=v; data[o+1]=v; data[o+2]=Math.min(255,v+16);
+        if (st.m>0.93){
+          const o2=o+4; data[o2]=mix(data[o2],v,0.5); data[o2+1]=mix(data[o2+1],v,0.5);
+        }
+      }
+    }
+    /* the sun, with a bit of bloom */
+    {
+      let rel=SUNAZ-FP.ang; rel=((rel+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
+      if (Math.abs(rel)<FOV+0.4){
+        const sx=HALF+rel/FOV*HALF, sy=horizon-H3*0.42;
+        const rr=clamp(H3*0.05/Math.sqrt(state.dist),1.2,H3*0.18);
+        const reach=rr*(airless?2.2:5.5);
+        const y0=Math.max(0,Math.floor(sy-reach)), y1=Math.min(H3-1,Math.ceil(sy+reach));
+        const x0=Math.max(0,Math.floor(sx-reach)), x1=Math.min(W3-1,Math.ceil(sx+reach));
+        for (let y=y0;y<=y1;y++) for (let x=x0;x<=x1;x++){
+          const dx2=x-sx, dy2=y-sy, dd=Math.sqrt(dx2*dx2+dy2*dy2);
+          if (dd>reach) continue;
+          const o=(y*W3+x)*4;
+          const a = dd<=rr ? 1 : Math.pow(1-(dd-rr)/(reach-rr),2.4)*0.62;
+          data[o]  =mix(data[o],255,a);
+          data[o+1]=mix(data[o+1],a>0.9?250:226,a);
+          data[o+2]=mix(data[o+2],a>0.9?228:150,a);
+        }
+      }
+    }
+
+    /* --- the ground --- */
+    for (let i=0;i<W3;i++) fpYbuf[i]=H3;
+    if (!fpPrev || fpPrev.length!==W3) fpPrev=new Float32Array(W3);
+    fpPrev.fill(NaN);
+    const SC=H3*0.66;
+    let z=0.7, dz=0.011;
+    while (z<ZMAX){
+      let plx=FP.x+cosA*z+sinA*z, ply=FP.y+sinA*z-cosA*z;
+      const prx=FP.x+cosA*z-sinA*z, pry=FP.y+sinA*z+cosA*z;
+      const ddx=(prx-plx)/W3, ddy=(pry-ply)/W3;
+      const fogT=1-Math.exp(-Math.pow(z/(ZMAX*0.52),2.1));
+      const inv=SC/z;
+      const drop=z*z*curve;
+      const det=clamp(1-z/42,0,1);
+      const su=2*z/W3, sv=dz;                            // sample spacing across and into the screen
+      let prevH=NaN;
+      for (let i=0;i<W3;i++){
+        const e=elevAt(plx,ply);
+        const o=texOff(plx,ply);
+        let h,r,gg,b,wet=false;
+        if (e<sea){
+          h=0; wet=true;
+          r=tex[o]; gg=tex[o+1]; b=tex[o+2];
+        } else {
+          h=(e-sea)*HSCALE;
+          if (det>0.01) h+=detailAt(plx,ply)*det;
+          r=tex[o]; gg=tex[o+1]; b=tex[o+2];
+        }
+        const hRaw=h;
+        h-=drop;
+
+        /* a real normal, from the two gradients we already have */
+        const pr2=fpPrev[i];
+        const du=isNaN(prevH)?0:(hRaw-prevH)/su;
+        const dv=isNaN(pr2)?0:(hRaw-pr2)/sv;
+        prevH=hRaw; fpPrev[i]=hRaw;
+        let nx=-(du*Rx+dv*Fx), ny=-(du*Ry+dv*Fy), nz=1;
+        const nl=Math.sqrt(nx*nx+ny*ny+1);
+        nx/=nl; ny/=nl; nz/=nl;
+        let dif=nx*Lx2+ny*Ly2+nz*Lz2; if (dif<0) dif=0;
+        let sh=AMB+dif*SUN;
+
+        if (wet){
+          /* water mirrors the sky, more so the further away it is */
+          const refl=clamp(0.22+z*0.026,0.22,0.9);
+          const c=i*3;
+          const wv=0.5+0.5*Math.sin(plx*3.1+ply*2.3+now*1.5);
+          r=mix(r*(0.55+0.2*wv), fpCol[c],   refl);
+          gg=mix(gg*(0.55+0.2*wv), fpCol[c+1], refl);
+          b=mix(b*(0.6+0.2*wv),  fpCol[c+2], refl);
+          let dAz=(i/W3-0.5)*2*FOV+FP.ang-SUNAZ;
+          dAz=((dAz+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
+          const glint=Math.exp(-dAz*dAz*26)*wv*wv*(airless?0.3:1);
+          r=mix(r,255,glint*0.85); gg=mix(gg,244,glint*0.85); b=mix(b,206,glint*0.7);
+          sh=1;
+        } else {
+          /* steep ground shows bare rock, flat ground keeps its colour */
+          const slope=clamp((Math.abs(du)+Math.abs(dv))*0.09,0,1);
+          if (slope>0.02){
+            const rock=112-24*(e-0.5);
+            r=mix(r,rock,slope*0.7); gg=mix(gg,rock*0.96,slope*0.7); b=mix(b,rock*0.9,slope*0.7);
+          }
+          const gr=(vnoise(plx*1.9,ply*1.9,3.3)-0.5)*16*det;
+          r+=gr; gg+=gr; b+=gr*0.85;
+        }
+
+        const hy=(((FP.z-h)*inv)+horizon)|0;
+        if (hy<fpYbuf[i]){
+          const c=i*3;
+          const rr=mix(r*sh,fpCol[c],fogT), gr2=mix(gg*sh,fpCol[c+1],fogT), br=mix(b*sh,fpCol[c+2],fogT);
+          let y=hy<0?0:hy;
+          const end=Math.min(fpYbuf[i],H3);
+          let p=(y*W3+i)*4;
+          const step=W3*4;
+          for (;y<end;y++){ data[p]=rr; data[p+1]=gr2; data[p+2]=br; data[p+3]=255; p+=step; }
+          fpYbuf[i]=hy;
+        }
+        plx+=ddx; ply+=ddy;
+      }
+      z+=dz; dz+=0.0052;
+    }
+    fpCtx.putImageData(fpImg,0,0);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.imageSmoothingEnabled=true;
+    ctx.drawImage(fpCanvas,0,0,W,H);
+
+    const ms=performance.now()-t0;
+    if (ms>26){ if(++fpSlow>10){ fpQual=Math.max(0.42,fpQual-0.09); fpSlow=0; } }
+    else if (ms<13){ if(--fpSlow<-90){ fpQual=Math.min(0.85,fpQual+0.05); fpSlow=0; } }
+
+    /* a soft vignette so the edges do not feel like a window */
+    const vg=ctx.createRadialGradient(W*0.5,H*0.52,Math.min(W,H)*0.28,W*0.5,H*0.52,Math.max(W,H)*0.78);
+    vg.addColorStop(0,"rgba(0,0,0,0)"); vg.addColorStop(1,"rgba(0,0,0,0.42)");
+    ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
+
+    /* a hot world glows, a cold one whites out a little */
+    if (d.T>420 || d.T<235){
+      const hot=d.T>420;
+      ctx.save(); ctx.globalCompositeOperation="lighter";
+      const gl=ctx.createLinearGradient(0,H,0,0);
+      gl.addColorStop(0, hot?"rgba(255,90,20,0.30)":"rgba(190,220,255,0.24)");
+      gl.addColorStop(1, hot?"rgba(255,90,20,0)":"rgba(190,220,255,0)");
+      ctx.fillStyle=gl; ctx.fillRect(0,0,W,H); ctx.restore();
+    }
+
+    FP.info+=dt;
+    if (FP.info>0.25){
+      FP.info=0;
+      const jump=1.25/Math.max(d.g,0.001);
+      $("fpinfo").textContent = tr("fp.info",{name: state.name||tr("fp.thisWorld"), temp: fmtTemp(d.T),
+        g: d.g.toFixed(2), jump: (jump>99?"99+":jump.toFixed(1))});
+    }
+  }
+
+  /* ================= frame ================= */
+  let lastLook={kind:"terra"}, eclipseWas=false, viewCx=0, viewCy=0, viewPr=0;
+  function draw(d){
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.drawImage(bgCanvas,0,0);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+
+    const now=performance.now()/1000;
+    const minD=Math.min(W,H);
+    const cx=W*0.55, cy=H*0.52;
+    const look=lastLook;
+    fx.eclipse=false;
+
+    if (look.kind==="hole"){
+      drawSun(W*0.11,H*0.80,minD);
+      drawBlackHole(cx,cy,clamp(minD*0.20,26,minD*0.30),now);
+      return;
+    }
+
+    const pr=clamp(minD*0.17*Math.pow(d.R,0.3)*state.zoom,11,minD*0.46);
+    viewCx=cx; viewCy=cy; viewPr=pr;
+    if (look.kind!=="star") drawSun(W*0.11,H*0.80,minD);
+    else drawCorona(cx,cy,pr,now);
+
+    if (!texReady){
+      const hot=state.heat>200;
+      const gl=ctx.createRadialGradient(cx-pr*0.35,cy-pr*0.3,pr*0.05,cx,cy,pr*1.05);
+      if (hot){ gl.addColorStop(0,"#FF9A3C"); gl.addColorStop(0.55,"#B23A16"); gl.addColorStop(1,"#3A130A"); }
+      else    { gl.addColorStop(0,"#4A4760"); gl.addColorStop(1,"#12111C"); }
+      ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(cx,cy,pr,0,6.2832); ctx.fill();
+      return;
+    }
+
+    const moonInfo = state.moonOn ? moonVec() : null;
+    if (state.ringsOn) drawRings(cx,cy,pr,"back");
+    if (moonInfo && moonInfo.z<=0) drawMoon(cx,cy,pr,d);
+
+    drawHalo(cx,cy,pr,d,look);
+    const t0=performance.now();
+    const Rr=clamp(Math.round(pr*DPR/2)*2,8,MAXR);
+    ensureBody(planetBody,Rr,TW,TH);
+    shadeBody(planetBody,tex,emis,fCloud,planetUniforms(d,look));
+    const ms=performance.now()-t0;
+    if (ms>20){ if (++slowFrames>14){ MAXR=Math.max(150,Math.round(MAXR*0.82)); slowFrames=0; } }
+    else slowFrames=0;
+    ctx.drawImage(planetBody.c, cx-pr, cy-pr, pr*2, pr*2);
+
+    if (look.kind!=="star") drawEclipse(cx,cy,pr);
+    drawAurora(cx,cy,pr,d,look);
+    drawSatellites(cx,cy,pr);
+    if (moonInfo && moonInfo.z>0) drawMoon(cx,cy,pr,d);
+    if (state.ringsOn) drawRings(cx,cy,pr,"front");
+    drawRockets(cx,cy,pr);
+    drawSmashFX(cx,cy,pr);
+  }
+
+  function frame(t){
+    const dt=Math.min(0.05,(t-tPrev)/1000||0);
+    tPrev=t;
+    if (!fieldsReady) generateChunk(26);
+
+    if (fx.inbound){
+      fx.inbound.t += dt/1.15;
+      if (fx.inbound.t >= 1){ applySmash(fx.inbound); fx.inbound=null; fx.flash=1; fx.debris=1; }
+    }
+    if (fx.flash>0) fx.flash=Math.max(0,fx.flash-dt/0.75);
+    if (fx.debris>0) fx.debris=Math.max(0,fx.debris-dt/1.9);
+    if (fx.rockets){
+      let alive=false;
+      for (const k of fx.rockets){ k.t += dt*k.sp; if (k.t<1.5) alive=true; }
+      if (!alive){
+        fx.rockets=null;
+        if (!fx.rocketsDone){
+          fx.rocketsDone=true;
+          say("log.escaped","good big");
+          award("escape");
+        }
+      }
+    }
+
+    const spd=SPEEDS[state.speed].y;
+    if (spd>0 && !fx.inbound) step(spd*dt);
+    rot += dt*clamp(state.spin,0.02,6)*0.32;
+    cloudRot += dt*0.0045;
+    moonAng += dt*0.30;
+    satAng += dt*0.85;
+    if (moonAng>Math.PI*2) moonAng-=Math.PI*2;
+
+    const d=update();
+    const look=lookOf(d);
+    if (fieldsReady){
+      if (look.kind==="star"){
+        const sig="star|"+Math.round(d.T/400);
+        if (texSig!==sig){ colorizeStar(d.T); texSig=sig; }
+      } else if (look.kind!=="hole"){
+        const sig=signature(d,look);
+        if (sig!==texSig){ colorize(d,look); texSig=sig; }
+      }
+    }
+    lastLook=look;
+    $("landhint").hidden = FP.on || !canLand(look) || !texReady;
+    if (FP.on && !canLand(look)) exitSurface("fp.groundGone");
+    if (FP.on && fieldsReady && texReady) renderSurface(d,look,dt);
+    else { if (FP.on) exitSurface(); draw(d); }
+    if (!fx.eclipse) eclipseWas=false;
+    checkTrophies(d,look);
+    refreshMinecraft(d,look);
+    requestAnimationFrame(frame);
+  }
+
+  /* ================= readouts ================= */
+  const factCache=["","","",""];
+  function update(){
+    const d=derive();
+    $("v-size").textContent  = state.size<1 ? state.size.toFixed(state.size<0.1?3:2)+"×" : state.size.toFixed(state.size<10?2:0)+"×";
+    const dg=d.dens*5.51;
+    $("v-dens").textContent  = dg>=1e4 ? dg.toExponential(1)+" g/cm³" : dg.toFixed(2)+" g/cm³";
+    $("v-dist").textContent  = state.dist.toFixed(state.dist<10?2:1)+" "+tr("u.AU");
+    $("v-air").textContent   = state.air<0.01 ? tr("v.almostNone") : state.air.toFixed(state.air<10?2:0)+"×";
+    $("v-water").textContent = state.water<0.02 ? tr("v.boneDry") : state.water.toFixed(2)+"×";
+    $("v-spin").textContent  = state.spin.toFixed(state.spin<10?2:0)+"×";
+    $("v-msize").textContent = state.moonSize.toFixed(2)+"×";
+    $("v-mdist").textContent = state.moonDist.toFixed(1)+"×";
+
+    const grav=$("r-grav"), temp=$("r-temp"), air=$("r-air"), wat=$("r-water");
+    grav.textContent = d.g>=100 ? Math.round(d.g).toLocaleString()+" g" : d.g.toFixed(2)+" g";
+    grav.className = (d.g>3||d.g<0.2) ? "hot" : "";
+    temp.textContent = fmtTemp(d.T);
+    temp.className = d.T>330 ? "hot" : (d.T<250 ? "cold" : "good");
+    air.textContent = fmtPressure(d.P);
+    air.className = (d.P<0.05||d.P>30) ? "hot" : "good";
+    wat.textContent = tr("water."+d.water);
+    wat.className = d.water==="liquid" ? "good" : (d.water==="ice" ? "cold" : (d.water==="none" ? "" : "hot"));
+    $("r-day").textContent = fmtDay(state.spin);
+    $("r-year").textContent = fmtYear(state.dist);
+
+    const life=$("r-life");
+    if (state.life>=1){ life.textContent=fmtCount(state.life); life.className=""; }
+    else if (state.everLived){ life.textContent=tr("r.lifeGone"); life.className="gone"; }
+    else { life.textContent=tr("r.lifeNoneYet"); life.className=""; }
+
+    const pop=$("r-pop");
+    if (state.pop>=1){ pop.textContent=fmtPeople(state.pop); pop.className=""; }
+    else if (state.hadPeople){ pop.textContent=tr("r.popGone"); pop.className="gone"; }
+    else { pop.textContent=tr("r.popNoneYet"); pop.className=""; }
+
+    const f=facts(d);
+    for (let i=0;i<4;i++){
+      const s=f[i]||"";
+      if (factCache[i]!==s){ factCache[i]=s; $("f"+(i+1)).innerHTML=s; }
+    }
+
+    const v=verdict(d);
+    $("pill").textContent=v.p;
+    $("pill").className="pill "+(v.c==="good"?"":v.c);
+    $("headline").textContent=v.h;
+    $("elapsed").textContent=fmtYears(state.years);
+    $("speedLabel").textContent=tr("speed."+state.speed+".label");
+    const over = d.blackHole || d.star || (state.hadPeople && state.pop<1) ||
+                 (state.everLived && state.stage<0 && !d.habitable);
+    $("restart").hidden = !over || !!fx.inbound;
+    return d;
+  }
+
+  /* ================= controls ================= */
+  function syncSliders(){
+    $("k-size").value  = SIZE.toSlider(state.size);
+    $("k-dens").value  = DENS.toSlider(state.dens);
+    $("k-dist").value  = DIST.toSlider(state.dist);
+    $("k-air").value   = AIR.toSlider(Math.max(state.air,0.002));
+    $("k-water").value = Math.round(clamp(state.water,0,20)*20);
+    $("k-spin").value  = SPIN.toSlider(state.spin);
+    $("k-msize").value = Math.round(state.moonSize*100);
+    $("k-mdist").value = Math.round(state.moonDist*10);
+    if ($("wname").value !== state.name) $("wname").value = state.name;
+    paintToggles();
+  }
+  function readSliders(){
+    state.size  = SIZE.fromSlider(+$("k-size").value);
+    state.dens  = DENS.fromSlider(+$("k-dens").value);
+    state.dist  = DIST.fromSlider(+$("k-dist").value);
+    state.air   = AIR.fromSlider(+$("k-air").value);
+    state.water = (+$("k-water").value)/20;
+    state.spin  = SPIN.fromSlider(+$("k-spin").value);
+    state.crush = 1;
+  }
+  function paintToggles(){
+    const mb=$("b-moon"), rb=$("b-rings");
+    mb.setAttribute("aria-pressed", String(state.moonOn));
+    mb.textContent = state.moonOn ? tr("btn.moonRemove") : tr("btn.moonAdd");
+    rb.setAttribute("aria-pressed", String(state.ringsOn));
+    rb.textContent = state.ringsOn ? tr("btn.ringsRemove") : tr("btn.ringsAdd");
+    $("knob-msize").classList.toggle("off", !state.moonOn);
+    $("knob-mdist").classList.toggle("off", !state.moonOn);
+  }
+
+  const INTRO = {
+    "A star":"log.introStar",
+    "Black hole":"log.introHole"
+  };
+  function loadPreset(name){
+    const p=PRESETS[name];
+    Object.assign(state,{size:p.size,dens:p.dens,dist:p.dist,air:Math.max(p.air,0.002),
+      water:p.water,spin:p.spin,crush:p.crush||1,seed:p.seed,heat:0,
+      years:0,bio:0,unfit:0,stage:-1,everLived:false,
+      pop:0,hadPeople:false,mourned:true,popMark:0,peaceYears:0,life:0,
+      iceFrac:0.2,vapour:0,tIce:false,tVap:false,tTherm:false,tSun:false,tField:false,tVolc:false,
+      moonOn:!!p.moon, moonSize:p.msize||0.27, moonDist:p.mdist||6, ringsOn:!!p.rings,
+      name:tr("preset."+name), chatter:0, chatIdx:0, panicIdx:0, distress:false, rocketsGone:false,
+      preset:name});
+    fx.rockets=null; fx.rocketsDone=false; fx.inbound=null; closePicker(); exitSurface();
+    markVisited(name);
+    if (name==="Earth"){
+      state.bio=4.5e9; state.stage=5; state.everLived=true;
+      state.pop=8.2e9; state.hadPeople=true; state.mourned=false; state.popMark=2;
+      state.life=2e19; state.iceFrac=0.06;
+    }
+    startFields(); syncSliders(); log=[]; takeSnapshot();
+    say(INTRO[name] || "log.loaded","big",{name:{t:"preset."+name}});
+    paintChips(); update();
+  }
+  const SNAP_KEYS=["size","dens","dist","air","water","spin","crush","seed","heat",
+                   "years","bio","unfit","stage","everLived","pop","hadPeople","mourned","popMark","life",
+                   "iceFrac","vapour","tIce","tVap","tTherm","tSun","tField","tVolc",
+                   "peaceYears","moonOn","moonSize","moonDist","ringsOn","preset",
+                   "name","chatter","chatIdx","panicIdx","distress","rocketsGone"];
+  function takeSnapshot(){ snapshot={}; for (const k of SNAP_KEYS) snapshot[k]=state[k]; }
+  function restart(){
+    if (!snapshot) return;
+    const oldSeed=state.seed;
+    for (const k of SNAP_KEYS) state[k]=snapshot[k];
+    if (state.seed!==oldSeed) startFields();
+    fx.inbound=null; fx.flash=0; fx.debris=0; fx.rockets=null; closePicker(); exitSurface();
+    syncSliders(); paintChips(); setSpeed(1); log=[];
+    say("log.restart","big");
+    update();
+  }
+  function paintChips(){
+    for (const b of $("worlds").children) b.setAttribute("aria-pressed", String(b.dataset.name===state.preset));
+  }
+  function custom(){ if (state.preset!=="custom"){ state.preset="custom"; paintChips(); } }
+
+  function buildChips(){
+    const box=$("worlds");
+    for (const name of Object.keys(PRESETS)){
+      const b=document.createElement("button");
+      b.className="chip"; b.type="button"; b.textContent=tr("preset."+name);
+      b.dataset.name=name; b.setAttribute("aria-pressed","false");
+      b.addEventListener("click",()=>loadPreset(name));
+      box.append(b);
+    }
+  }
+  function buildSpeeds(){
+    const box=$("speeds");
+    SPEEDS.forEach((s,i)=>{
+      const b=document.createElement("button");
+      b.className="speed"; b.type="button";
+      const top=document.createElement("div"); top.textContent=tr("speed."+i+".top"); top.style.fontSize="12px";
+      const bot=document.createElement("div"); bot.textContent=tr("speed."+i+".bot"); bot.style.opacity=".7"; bot.style.fontSize="9px";
+      b.append(top,bot);
+      b.setAttribute("aria-pressed",String(i===state.speed));
+      b.setAttribute("aria-label",tr("speed."+i+".label"));
+      b.addEventListener("click",()=>setSpeed(i));
+      box.append(b);
+    });
+  }
+  function paintSpeedText(){
+    const ch=$("speeds").children;
+    for (let i=0;i<ch.length;i++){
+      ch[i].children[0].textContent=tr("speed."+i+".top");
+      ch[i].children[1].textContent=tr("speed."+i+".bot");
+      ch[i].setAttribute("aria-label",tr("speed."+i+".label"));
+    }
+  }
+  function setSpeed(i){
+    state.speed=i;
+    const ch=$("speeds").children;
+    for (let k=0;k<ch.length;k++) ch[k].setAttribute("aria-pressed",String(k===i));
+  }
+
+  const NAME_A=["Kepler","Gliese","Proxima","Vega","Lyra","Orion","Nyx","Tharsis","Corvus","Aster",
+                "Halcyon","Zephyr","Draco","Cygnus","Rhea","Umbriel","Carina","Mimir"];
+  const NAME_B=["Minor","Prime","Reach","Deep","Hollow","b","c","II","IX","Rock"];
+  function rollName(){
+    const a=NAME_A[(Math.random()*NAME_A.length)|0];
+    return Math.random()<0.5 ? a+"-"+(100+((Math.random()*899)|0))
+                             : a+" "+NAME_B[(Math.random()*NAME_B.length)|0];
+  }
+
+  /* ---- smashing two planets together ---- */
+  const THROWS = [
+    {id:"rand",    name:"A random rock", rand:true,        col:["#CDAE8E","#8A6A52","#33251E"]},
+    {id:"moon",    name:"The Moon",      key:"Moon",       col:["#DCD7CC","#8E8A82","#33312C"]},
+    {id:"mercury", name:"Mercury",       key:"Mercury",    col:["#CBAB8F","#8A6E58","#2E241E"]},
+    {id:"mars",    name:"Mars",          key:"Mars",       col:["#DE8C5C","#9A4E2C","#33170E"]},
+    {id:"titan",   name:"Titan",         key:"Titan",      col:["#E6B876","#9A6A34","#33220E"]},
+    {id:"pluto",   name:"Pluto",         key:"Pluto",      col:["#E4DCD0","#9A8E80","#332E28"]},
+    {id:"venus",   name:"Venus",         key:"Venus",      col:["#F4E0AC","#C8A25E","#443014"]},
+    {id:"earth2",  name:"Another Earth", key:"Earth",      col:["#86BAE6","#2E6FA8","#0E2438"]},
+    {id:"jupiter", name:"Jupiter",       key:"Jupiter",    col:["#EEDCBC","#B98A5E","#44301E"]},
+    {id:"saturn",  name:"Saturn",        key:"Saturn",     col:["#F2E2C0","#C2A472","#443822"]},
+    {id:"star",    name:"A whole star",  key:"A star",     col:["#FFFFFF","#FFD48A","#FF8A28"], glow:true},
+    {id:"hole",    name:"A black hole",  key:"Black hole", col:["#22202C","#08070E","#000000"], dark:true}
+  ];
+  function massOf(p){ return p.dens*p.size*p.size*p.size; }
+  function buildThrowList(){
+    const box=$("throwlist"); box.textContent="";
+    for (const t of THROWS){
+      const b=document.createElement("button");
+      b.className="throw"; b.type="button";
+      const dot=document.createElement("span"); dot.className="dot";
+      dot.style.background="radial-gradient(circle at 32% 30%,"+t.col[0]+","+t.col[1]+" 62%,"+t.col[2]+")";
+      const box2=document.createElement("span");
+      const nm=document.createElement("span"); nm.textContent=tr("throw."+t.id);
+      const ms=document.createElement("span"); ms.className="mass";
+      if (t.rand) ms.textContent=tr("throw.surprise");
+      else {
+        const m=massOf(PRESETS[t.key]);
+        ms.textContent = t.key==="Black hole" ? tr("throw.swallows")
+                       : tr("throw.xEarth",{n: m>=1000 ? Math.round(m).toLocaleString()
+                                             : m>=1 ? m.toFixed(1)
+                                             : m.toFixed(m<0.1?3:2)});
+      }
+      box2.append(nm,ms); b.append(dot,box2);
+      b.addEventListener("click",()=>{ closePicker(); throwPlanet(t); });
+      box.append(b);
+    }
+  }
+  function openPicker(){ if (fx.inbound) return; buildThrowList(); $("picker").hidden=false; }
+  function closePicker(){ $("picker").hidden=true; }
+
+  function throwPlanet(t){
+    if (fx.inbound) return;
+    const p = t.key ? PRESETS[t.key] : null;
+    const rel = p ? p.size/Math.max(state.size,0.001) : (0.3+Math.random()*0.42);
+    exitSurface();
+    fx.inbound={t:0, a:Math.random()*Math.PI*2, rel, throw:t, size:rel};
+    say(t.rand ? "log.incomingRand" : "log.incoming","big",{name:{t:"throw."+t.id}});
+  }
+
+  function applySmash(s){
+    const t = s.throw || {};
+    const p = t.key ? PRESETS[t.key] : null;
+    const M1 = state.dens*state.size*state.size*state.size;
+    let M2, d2, w2, a2;
+    if (p){ M2=massOf(p); d2=p.dens; w2=p.water; a2=Math.max(p.air,0.002); }
+    else {
+      const r=s.rel;
+      M2 = state.dens*Math.pow(state.size*r,3);
+      d2 = state.dens; w2 = state.water*0.4; a2 = state.air*0.3;
+    }
+    const M = M1+M2, ratio = M2/Math.max(M1,1e-9);
+    state.dens = clamp((state.dens*M1 + d2*M2)/M, 0.05, 20);
+    state.size = clamp(Math.pow(M/state.dens, 1/3), 0.05, 120);
+    state.water = clamp((state.water*M1 + w2*M2)/M*0.6, 0, 20);
+    state.air   = clamp((state.air*M1 + a2*M2)/M*0.7, 0.002, 60);
+    state.heat  = Math.min(4000, state.heat + 450 + 1500*clamp(ratio,0,2));
+    state.spin  = clamp(0.15+Math.random()*3.6, 0.02, 40);
+    state.crush = 1;
+    state.seed  = Math.floor(Math.random()*1e6);
+    const hadLife=state.stage>=0, hadPpl=state.pop>=1;
+    state.bio=0; state.stage=-1; state.unfit=0; state.pop=0; state.peaceYears=0; state.life=0;
+    state.vapour=0; state.iceFrac=0.05;
+    if (hadPpl) state.mourned=true;
+    if (t.key==="Black hole") state.crush = 9e26;
+    startFields(); syncSliders(); custom();
+
+    const d = derive();
+    if (d.blackHole)      say("log.smash.swallowed","bad big");
+    else if (d.star)      say("log.smash.star","bad big");
+    else if (ratio > 3)   say("log.smash.lost","bad big",{name: p ? {t:"preset."+t.key} : {t:"log.smash.otherOne"}});
+    else if (ratio > 0.3) say("log.smash.direct","bad big");
+    else                  say("log.smash.solid","big");
+    if (hadLife && !d.blackHole && !d.star)
+      say(hadPpl ? "log.smash.nobody" : "log.smash.allDead","bad");
+    if (!state.moonOn && !d.blackHole && !d.star && ratio<3 && Math.random()<0.55){
+      state.moonOn=true;
+      state.moonSize=0.14+Math.random()*0.2;
+      state.moonDist=4+Math.random()*6;
+      paintToggles();
+      say("log.smash.moon","good");
+    }
+    award("smash");
+    update();
+  }
+
+  ["k-size","k-dens","k-dist","k-air","k-water","k-spin"].forEach(id=>{
+    $(id).addEventListener("input",()=>{ readSliders(); custom(); update(); });
+  });
+  $("k-msize").addEventListener("input",()=>{ state.moonSize=(+$("k-msize").value)/100; if(!state.moonOn){state.moonOn=true;paintToggles();} update(); });
+  $("k-mdist").addEventListener("input",()=>{ state.moonDist=(+$("k-mdist").value)/10; if(!state.moonOn){state.moonOn=true;paintToggles();} update(); });
+
+  $("b-moon").addEventListener("click",()=>{
+    state.moonOn=!state.moonOn; paintToggles();
+    say(state.moonOn?"log.moonAdd":"log.moonRemove","big");
+  });
+  $("b-rings").addEventListener("click",()=>{
+    state.ringsOn=!state.ringsOn; paintToggles();
+    say(state.ringsOn?"log.ringsAdd":"log.ringsRemove","big");
+  });
+  $("b-shrink").addEventListener("click",()=>{
+    state.size=Math.max(0.05,state.size/10); state.crush=1; syncSliders(); custom();
+    say("log.shrink","big"); update();
+  });
+  $("b-grow").addEventListener("click",()=>{
+    state.size=Math.min(120,state.size*10); state.crush=1; syncSliders(); custom();
+    say("log.grow","big"); update();
+  });
+  $("b-crush").addEventListener("click",()=>{
+    state.crush*=3e13; custom();
+    const bh=derive().blackHole;
+    say(bh?"log.crushHole":"log.crushBall", bh?"bad big":"big");
+    update();
+  });
+  $("b-rock").addEventListener("click",()=>{
+    state.water=Math.min(20,state.water+0.3);
+    state.seed=Math.floor(Math.random()*1e6); startFields(); syncSliders();
+    say("log.rock","big");
+    if (state.stage>=3 && Math.random()<0.6){
+      state.bio=Math.max(0,state.bio-1.2e9); restage();
+      state.life*=0.2;
+      say("log.rockDied","bad");
+      if (state.pop>1000){ state.pop*=0.1; state.peaceYears=0; }
+    }
+    update();
+  });
+  $("b-freeze").addEventListener("click",()=>{
+    state.dist=Math.min(40,state.dist*2.2); syncSliders(); custom();
+    say("log.freeze","big"); update();
+  });
+  $("b-bake").addEventListener("click",()=>{
+    state.dist=Math.max(0.05,state.dist/2.2); syncSliders(); custom();
+    say("log.bake","big"); update();
+  });
+  $("b-smash").addEventListener("click", openPicker);
+  $("b-cancel").addEventListener("click", closePicker);
+  $("z-in").addEventListener("click",()=>{ state.zoom=clamp(state.zoom*1.28,0.5,3); });
+  $("z-out").addEventListener("click",()=>{ state.zoom=clamp(state.zoom/1.28,0.5,3); });
+  $("mcbox").addEventListener("toggle",()=>{ mcCache=""; });
+  $("mccopy").addEventListener("click",()=>{
+    const btn=$("mccopy");
+    const done=ok=>{ btn.textContent = ok ? tr("mc.copiedAll") : tr("mc.copyFail");
+                     setTimeout(()=>btn.textContent=tr("mc.copyAll"),2400); };
+    copyText(mcText, ()=>done(true), ()=>done(false));
+  });
+  $("wname").addEventListener("input",()=>{
+    state.name=$("wname").value.slice(0,26);
+    const t=state.name.trim();
+    if (t.length>1 && !presetKeyOf(t)) award("namer");
+  });
+  $("b-random").addEventListener("click",()=>{
+    state.size=0.15+Math.random()*3.2;
+    state.dens=0.3+Math.random()*1.6;
+    state.dist=0.25+Math.random()*4;
+    state.air=Math.random()<0.3?0.002:Math.random()*6;
+    state.water=Math.random()*4;
+    state.spin=0.05+Math.random()*6;
+    state.crush=1; state.heat=0; state.years=0; state.bio=0; state.stage=-1;
+    state.unfit=0; state.everLived=false;
+    state.pop=0; state.hadPeople=false; state.mourned=true; state.popMark=0; state.peaceYears=0;
+    state.life=0; state.iceFrac=0.2; state.vapour=0;
+    state.tIce=state.tVap=state.tTherm=state.tSun=state.tField=state.tVolc=false;
+    state.moonOn=Math.random()<0.5; state.moonSize=0.1+Math.random()*0.3; state.moonDist=3.5+Math.random()*8;
+    state.ringsOn=Math.random()<0.28;
+    state.chatter=0; state.chatIdx=0; state.panicIdx=0; state.distress=false; state.rocketsGone=false;
+    fx.rockets=null; fx.rocketsDone=false;
+    state.name=rollName();
+    state.seed=Math.floor(Math.random()*1e6);
+    startFields(); syncSliders(); state.preset="custom"; paintChips();
+    log=[]; takeSnapshot();
+    say("log.random","big"); update();
+  });
+  $("b-restart").addEventListener("click", restart);
+  $("restart").addEventListener("click", restart);
+
+  /* ---- landing on it and walking about ---- */
+  function tryLand(mx,my){
+    if (FP.on || !viewPr) return;
+    const nx=(mx-viewCx)/viewPr, ny=-(my-viewCy)/viewPr, q=nx*nx+ny*ny;
+    if (q>=0.995) return;
+    const nz=Math.sqrt(1-q);
+    enterSurface(Math.asin(clamp(ny,-1,1)), Math.atan2(nx,nz)+rot);
+  }
+  let ptr=null;
+  cv.addEventListener("pointerdown",e=>{
+    const r=cv.getBoundingClientRect();
+    ptr={x:e.clientX,y:e.clientY,mx:e.clientX-r.left,my:e.clientY-r.top,moved:false};
+    if (FP.on){ try{cv.setPointerCapture(e.pointerId);}catch(err){} }
+  });
+  cv.addEventListener("pointermove",e=>{
+    if (!ptr) return;
+    const dx=e.clientX-ptr.x, dy=e.clientY-ptr.y;
+    if (Math.abs(dx)+Math.abs(dy)>5) ptr.moved=true;
+    if (FP.on){
+      FP.ang += dx*0.006;
+      FP.pitch = clamp(FP.pitch - dy*0.7, -70, 70);
+      ptr.x=e.clientX; ptr.y=e.clientY;
+    }
+  });
+  cv.addEventListener("pointerup",()=>{ if (ptr && !ptr.moved) tryLand(ptr.mx,ptr.my); ptr=null; });
+  cv.addEventListener("pointercancel",()=>{ ptr=null; });
+  cv.addEventListener("pointerleave",()=>{ ptr=null; });
+
+  $("fpback").addEventListener("click",()=>exitSurface());
+  function hold(id,set){
+    const b=$(id);
+    const on=e=>{ e.preventDefault(); set(true); };
+    const off=()=>set(false);
+    b.addEventListener("pointerdown",on);
+    b.addEventListener("pointerup",off);
+    b.addEventListener("pointerleave",off);
+    b.addEventListener("pointercancel",off);
+  }
+  hold("fp-fwd",  v=>FP.btn.fwd=v);
+  hold("fp-left", v=>FP.btn.left=v);
+  hold("fp-right",v=>FP.btn.right=v);
+  $("fp-jump").addEventListener("click",()=>{ if (!FP.jumping){ FP.jumping=true; FP.vz=14; } });
+
+  const FPKEY={KeyW:"fwd",ArrowUp:"fwd",KeyS:"back",ArrowDown:"back",
+               KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right"};
+  document.addEventListener("keydown",e=>{
+    if (/INPUT|TEXTAREA/.test(e.target.tagName)) return;
+    if (FP.on && FPKEY[e.code]){ FP.keys[FPKEY[e.code]]=true; e.preventDefault(); return; }
+    if (e.code==="Space" && !/INPUT|BUTTON|TEXTAREA/.test(e.target.tagName)){
+      e.preventDefault();
+      if (FP.on){ if (!FP.jumping){ FP.jumping=true; FP.vz=14; } }
+      else setSpeed(state.speed===0?3:0);
+      return;
+    }
+    if (FP.on && e.code==="Escape") exitSurface();
+  });
+  document.addEventListener("keyup",e=>{
+    if (FP.on && FPKEY[e.code]) FP.keys[FPKEY[e.code]]=false;
+  });
+
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(cv);
+  window.addEventListener("resize",resize);
+
+  /* ================= apply language ================= */
+  function applyLang(){
+    document.documentElement.lang = LANG==="zh" ? "zh-CN" : LANG;
+    document.querySelectorAll("[data-i18n]").forEach(el=>{ el.textContent = tr(el.getAttribute("data-i18n")); });
+    document.querySelectorAll("[data-i18n-html]").forEach(el=>{ el.innerHTML = tr(el.getAttribute("data-i18n-html")); });
+    document.querySelectorAll("[data-i18n-aria]").forEach(el=>{ el.setAttribute("aria-label", tr(el.getAttribute("data-i18n-aria"))); });
+    document.querySelectorAll("#langSel .langbtn").forEach(b=>{ b.setAttribute("aria-pressed", String(b.getAttribute("data-lang")===LANG)); });
+    for (const b of $("worlds").children) b.textContent = tr("preset."+b.dataset.name);
+    paintSpeedText();
+    renderTrophies();
+    if (!$("picker").hidden) buildThrowList();
+    paintToggles();
+    /* a world still carrying a starting world's name follows the language; a name the kid typed stays */
+    const pk = presetKeyOf(state.name);
+    if (pk){ state.name = tr("preset."+pk); $("wname").value = state.name; }
+    renderLog();
+    mcCache = "";          /* the Minecraft panel rebuilds its labels on the next frame */
+    FP.info = 1;           /* and the walking HUD refreshes straight away */
+    update();
+  }
+  $("langSel").addEventListener("click", e=>{
+    const b = e.target.closest ? e.target.closest(".langbtn") : null;
+    if (b) setLang(b.getAttribute("data-lang"));
+  });
+
+  /* ================= boot ================= */
+  function start(saved){
+    buildChips(); buildSpeeds(); renderTrophies();
+    if (saved && saved.state){ Object.assign(state,saved.state); log=saved.log||[]; }
+    if (saved && saved.snap) snapshot=saved.snap;
+    document.querySelector(".screen").classList.add("aiming");
+    resize(); startFields(); syncSliders(); paintChips(); setSpeed(state.speed);
+    if (!log.length){
+      state.bio=4.5e9; state.stage=5; state.everLived=true;
+      state.pop=8.2e9; state.hadPeople=true; state.mourned=false; state.popMark=2;
+      state.life=2e19; state.iceFrac=0.06;
+      state.moonOn=true; state.name=tr("preset.Earth"); markVisited("Earth");
+      say("log.boot","big");
+    } else renderLog();
+    syncSliders();
+    if (!snapshot) takeSnapshot();
+    applyLang();
+    requestAnimationFrame(t=>{ tPrev=t; requestAnimationFrame(frame); });
+  }
+  try {
+    if (window.claude && window.claude.hot && window.claude.hot.snapshot)
+      window.claude.hot.snapshot(()=>({state:state, log:log, snap:snapshot}));
+  } catch(e){}
+  if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(start);
+  else start((window.claude && window.claude.hot && window.claude.hot.data)||{});
+})();
+</script>
+
+</body></html>
